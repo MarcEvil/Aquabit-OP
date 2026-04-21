@@ -11,8 +11,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public')); // Para servir tu HTML, CSS y JS
-app.use('/uploads', express.static('uploads')); // Para poder ver las fotos subidas
+app.use(express.static('public'));
+app.use('/uploads', express.static('uploads'));
 
 // --- CONFIGURACIÓN DE STORAGE (MULTER) ---
 const storage = multer.diskStorage({
@@ -20,36 +20,46 @@ const storage = multer.diskStorage({
         cb(null, 'uploads/');
     },
     filename: (req, file, cb) => {
-        // Guardamos el archivo con un nombre único: timestamp + nombre original
         cb(null, Date.now() + '-' + file.originalname);
     }
 });
 const upload = multer({ storage: storage });
 
 // --- CONEXIÓN A BASE DE DATOS (SEQUELIZE) ---
+// Usamos process.env.DATABASE_URL que configuramos en el panel de Render
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
+    protocol: 'postgres',
     dialectOptions: {
         ssl: {
             require: true,
-            rejectUnauthorized: false // Vital para conectar con Supabase desde afuera
-        }
+            rejectUnauthorized: false // Vital para certificados de Supabase/Render
+        },
+        // Esto ayuda a evitar errores de protocolo en conexiones persistentes
+        prepareThreshold: 0
     },
-    logging: false // Para no llenar la consola de logs de SQL
+    // El Pool mantiene conexiones abiertas para evitar el "Connection terminated unexpectedly"
+    pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+    },
+    logging: false
 });
 
 // --- DEFINICIÓN DEL MODELO ---
 const Registro = sequelize.define('Registro', {
     tipo: {
         type: DataTypes.STRING,
-        allowNull: false // 'cortes' o 'reposiciones'
+        allowNull: false
     },
     observaciones: {
         type: DataTypes.TEXT,
         allowNull: true
     },
     fotos: {
-        type: DataTypes.JSON, // Guardaremos los nombres de los archivos como un array
+        type: DataTypes.JSON,
         allowNull: false
     }
 });
@@ -61,7 +71,7 @@ async function startApp() {
         await sequelize.authenticate();
         console.log('✅ Conexión exitosa con Supabase (Aquabit-DB).');
 
-        await sequelize.sync(); // Crea la tabla si no existe
+        await sequelize.sync();
         console.log('✅ Modelos sincronizados correctamente.');
 
         // --- RUTAS ---
@@ -70,16 +80,12 @@ async function startApp() {
         app.post('/api/upload', upload.array('fotos', 3), async (req, res) => {
             try {
                 const { tipo, observaciones } = req.body;
-
-                // Extraemos solo los nombres de los archivos subidos
                 const nombresFotos = req.files.map(file => file.filename);
 
-                // Validación simple de negocio
                 if (tipo === 'cortes' && nombresFotos.length < 3) {
                     return res.status(400).json({ error: 'Se requieren 3 fotos para cortes.' });
                 }
 
-                // Guardar en la base de datos
                 const nuevoRegistro = await Registro.create({
                     tipo: tipo,
                     observaciones: observaciones,
@@ -96,9 +102,9 @@ async function startApp() {
         });
 
         // Iniciar el servidor
-        const PORT = process.env.PORT || 3000;
+        const PORT = process.env.PORT || 10000; // Render usa el 10000 por defecto
         app.listen(PORT, () => {
-            console.log(`🚀 AquaBit OP corriendo en http://localhost:${PORT}`);
+            console.log(`🚀 AquaBit OP corriendo en puerto ${PORT}`);
         });
 
     } catch (error) {
