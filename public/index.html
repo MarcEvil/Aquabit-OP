@@ -25,156 +25,138 @@
 
 <body class="bg-gray-900 text-white font-sans">
 
-    <header class="sticky top-0 bg-gray-900/95 backdrop-blur-sm z-50 p-4 border-b border-gray-800">
-        <h1 class="text-xl font-bold text-blue-400 flex items-center gap-2">
-            💧 AquaBit OP <span
-                class="text-[10px] bg-blue-900 text-blue-200 px-2 py-0.5 rounded-full uppercase tracking-tighter">Terreno
-                v2.0</span>
-        </h1>
+    <header class="p-4 border-b border-gray-800">
+        <h1 class="text-xl font-bold text-blue-400">💧 AquaBit OP</h1>
     </header>
 
     <main class="p-4 max-w-md mx-auto">
         <div class="flex gap-2 mb-6">
             <button onclick="setTipo('corte')" id="btn-corte"
-                class="flex-1 p-3 rounded-xl bg-gray-800 border border-gray-700 font-bold active-tab transition-all">Corte</button>
+                class="flex-1 p-3 rounded-xl bg-gray-800 border border-gray-700 font-bold active-tab">Corte</button>
             <button onclick="setTipo('reposicion')" id="btn-repo"
-                class="flex-1 p-3 rounded-xl bg-gray-800 border border-gray-700 font-bold transition-all">Reposición</button>
+                class="flex-1 p-3 rounded-xl bg-gray-800 border border-gray-700 font-bold">Reposición</button>
         </div>
 
         <section class="bg-gray-800 p-5 rounded-2xl shadow-2xl mb-8 border border-gray-700">
-            <input type="file" id="fotoInput" accept="image/*" capture="camera" class="hidden" multiple
+            <input type="file" id="fotoInput" accept="image/*" capture="environment" class="hidden"
                 onchange="actualizarPrevisualizacion()">
 
             <button onclick="document.getElementById('fotoInput').click()"
-                class="w-full bg-blue-600 hover:bg-blue-500 p-4 rounded-xl mb-4 font-bold flex items-center justify-center gap-3 shadow-lg shadow-blue-900/20">
+                class="w-full bg-blue-600 p-4 rounded-xl mb-4 font-bold flex items-center justify-center gap-3">
                 <span class="text-2xl">📸</span>
-                <span id="textoBotonCamara">Tomar Fotos (Mín. 3)</span>
+                <span id="textoBotonCamara">Tomar Foto (Corte)</span>
             </button>
 
             <div id="previewFotos" class="flex gap-2 overflow-x-auto mb-4 scrollbar-hide"></div>
 
             <textarea id="obs" placeholder="Notas del servicio..."
-                class="w-full p-4 bg-gray-900 border border-gray-700 rounded-xl mb-4 h-28 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none text-sm"></textarea>
+                class="w-full p-4 bg-gray-900 border border-gray-700 rounded-xl mb-4 h-28 text-white outline-none text-sm"></textarea>
 
-            <button id="btnEnviar" onclick="enviar()"
-                class="w-full bg-green-600 hover:bg-green-500 p-4 rounded-xl font-black text-lg tracking-wide shadow-lg shadow-green-900/20 disabled:opacity-50">
+            <button id="btnEnviar" onclick="enviar()" class="w-full bg-green-600 p-4 rounded-xl font-black text-lg">
                 GUARDAR REGISTRO
             </button>
         </section>
 
-        <div class="flex items-center justify-between mb-4 px-1">
-            <h2 class="text-lg font-bold">Historial de <span id="labelTipo" class="text-blue-400">Corte</span></h2>
-            <button onclick="cargarHistorial()" class="text-xs text-gray-500">🔄 Actualizar</button>
-        </div>
-
-        <div id="historial" class="space-y-4 pb-20">
-        </div>
+        <h2 class="text-lg font-bold mb-4">Historial de <span id="labelTipo" class="text-blue-400">Corte</span></h2>
+        <div id="historial" class="space-y-4 pb-20"></div>
     </main>
 
     <script>
         let tipoActual = 'corte';
-        const API_URL = '/api';
+        // CORRECCIÓN URL: Asegúrate de que apunte a tu dominio de Render
+        const API_URL = 'https://aquabit-op.onrender.com/api';
 
-        // Cambiar entre Corte y Reposición
         function setTipo(t) {
             tipoActual = t;
             document.getElementById('btn-corte').classList.toggle('active-tab', t === 'corte');
             document.getElementById('btn-repo').classList.toggle('active-tab', t === 'reposicion');
-
-            // Ajustar requerimientos visuales
             document.getElementById('labelTipo').innerText = t === 'corte' ? 'Corte' : 'Reposición';
-            document.getElementById('textoBotonCamara').innerText = t === 'corte' ? 'Tomar Fotos (Mín. 3)' : 'Tomar Foto (Mín. 1)';
-
-            // Limpiar formulario al cambiar
-            document.getElementById('fotoInput').value = '';
-            document.getElementById('previewFotos').innerHTML = '';
-
+            document.getElementById('textoBotonCamara').innerText = t === 'corte' ? 'Tomar Foto (Corte)' : 'Tomar Foto (Repo)';
             cargarHistorial();
         }
 
-        // Mostrar miniaturas antes de subir
         function actualizarPrevisualizacion() {
             const preview = document.getElementById('previewFotos');
-            const files = document.getElementById('fotoInput').files;
-            preview.innerHTML = '';
+            const file = document.getElementById('fotoInput').files;
+            if (!file) return;
 
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = "h-16 w-16 object-cover rounded-lg border border-gray-600";
-                    preview.appendChild(img);
-                }
-                reader.readAsDataURL(file);
-            });
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = "h-20 w-20 object-cover rounded-lg border-2 border-blue-500";
+                preview.innerHTML = ''; // Limpiamos para mostrar la nueva foto
+                preview.appendChild(img);
+            }
+            reader.readAsDataURL(file);
         }
 
-        // Cargar datos desde el Servidor
         async function cargarHistorial() {
             const contenedor = document.getElementById('historial');
-            contenedor.innerHTML = '<p class="text-center text-gray-600 animate-pulse">Cargando datos técnicos...</p>';
-
             try {
                 const res = await fetch(`${API_URL}/registros/${tipoActual}`);
                 const registros = await res.json();
                 contenedor.innerHTML = '';
 
-                if (registros.length === 0) {
-                    contenedor.innerHTML = '<p class="text-center text-gray-600 py-10 italic text-sm">No hay registros pendientes.</p>';
-                    return;
-                }
-
                 registros.forEach(reg => {
                     const card = document.createElement('div');
-                    card.className = 'bg-gray-800 p-4 rounded-2xl border-l-4 ' + (tipoActual === 'corte' ? 'border-blue-500' : 'border-green-500') + ' relative shadow-md';
+                    card.className = 'bg-gray-800 p-4 rounded-2xl border-l-4 ' + (tipoActual === 'corte' ? 'border-blue-500' : 'border-green-500') + ' relative';
 
-                    const checkbox = tipoActual === 'reposicion'
-                        ? `<input type="checkbox" class="w-6 h-6 rounded-full bg-gray-900 border-gray-700 checked:bg-green-500 transition-all">`
-                        : '';
+                    const checkbox = tipoActual === 'reposicion' ? `<input type="checkbox" class="w-6 h-6 mr-2">` : '';
 
                     card.innerHTML = `
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="text-[10px] font-mono text-gray-500 uppercase">${new Date(reg.createdAt).toLocaleString()}</span>
-                            <div class="flex items-center gap-3">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[10px] text-gray-500">${new Date(reg.createdAt).toLocaleString()}</span>
+                            <div class="flex items-center">
                                 ${checkbox}
-                                <button onclick="eliminar(${reg.id})" class="text-gray-600 hover:text-red-500 font-bold text-sm px-2">✕</button>
+                                <button onclick="eliminar(${reg.id})" class="text-red-500 ml-2 font-bold">✕</button>
                             </div>
                         </div>
-                        <p class="text-sm text-gray-200 mb-4 leading-relaxed">${reg.observaciones || '---'}</p>
-                        <div class="flex gap-2 overflow-x-auto scrollbar-hide">
-                            ${reg.fotos.map(url => `<img src="${url}" class="h-20 w-20 object-cover rounded-xl shadow-inner border border-gray-700">`).join('')}
+                        <p class="text-sm mb-3">${reg.observaciones || ''}</p>
+                        <div class="flex gap-2 overflow-x-auto">
+                            ${reg.fotos.map(url => `<img src="${url}" class="h-20 w-20 object-cover rounded-lg">`).join('')}
                         </div>
                     `;
                     contenedor.appendChild(card);
                 });
-            } catch (error) {
-                contenedor.innerHTML = '<p class="text-red-500 text-center text-sm">Error de conexión con la base de datos.</p>';
+            } catch (e) {
+                contenedor.innerHTML = '<p class="text-red-400">Error al conectar con el servidor.</p>';
             }
         }
 
-        // Eliminar Registro
         async function eliminar(id) {
-            if (!confirm('¿Confirma la eliminación del registro?')) return;
+            if (!confirm('¿Eliminar?')) return;
             await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
             cargarHistorial();
         }
 
-        // Enviar (Integración con tu lógica de Supabase)
+        // --- IMPORTANTE: LÓGICA DE ENVÍO ---
         async function enviar() {
-            const btn = document.getElementById('btnEnviar');
-            btn.disabled = true;
-            btn.innerText = "PROCESANDO...";
+            const obs = document.getElementById('obs').value;
+            const file = document.getElementById('fotoInput').files;
 
-            // AQUÍ DEBES PEGAR TU LÓGICA DE SUBIDA A SUPABASE STORAGE
-            // Una vez tengas las URLs, haces el fetch POST a /api/upload
+            if (!file) return alert("Toma una foto primero");
 
-            alert("Lógica de envío lista. ¡Conecta tus credenciales de Supabase!");
-            btn.disabled = false;
-            btn.innerText = "GUARDAR REGISTRO";
+            // Aquí deberías tener tu código de subida a Supabase Storage
+            // Supongamos que ya subiste la foto y tienes la URL:
+            const urlsSimuladas = ["https://via.placeholder.com/150"]; // REEMPLAZAR CON TU URL REAL
+
+            const res = await fetch(`${API_URL}/upload`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tipo: tipoActual,
+                    observaciones: obs,
+                    fotos: urlsSimuladas
+                })
+            });
+
+            if (res.ok) {
+                alert("Guardado");
+                location.reload();
+            }
         }
 
-        // Inicio automático
         setTipo('corte');
     </script>
 </body>
