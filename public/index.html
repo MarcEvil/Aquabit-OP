@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaBit OP - Sistema de Gestión</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <div class="logo">AquaBit <span>OP</span></div>
+        <nav class="tab-bar">
+            <button id="btn-cortes" class="tab-btn active" onclick="switchTab('cortes')">Cortes</button>
+            <button id="btn-reposiciones" class="tab-btn" onclick="switchTab('reposiciones')">Reposiciones</button>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section id="form-container">
+            <div id="input-group" class="input-group">
+                <label for="observaciones">Observaciones Técnicas:</label>
+                <textarea id="observaciones" placeholder="Escriba aquí los detalles del trabajo..."></textarea>
+            </div>
+
+            <div class="upload-section">
+                <label for="file-input" class="upload-btn">
+                    📸 Capturar Fotografía
+                </label>
+                <input type="file" id="file-input" accept="image/*" capture="environment" hidden>
+                <p id="photo-count">Fotos: 0 / 3</p>
+            </div>
+
+            <div id="image-list" class="image-list">
+            </div>
+
+            <button id="btn-guardar" class="save-btn" onclick="enviarDatos()">Guardar Registro</button>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
