@@ -11,10 +11,10 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static('public'));
 
-// 1. CONEXIÓN A BASE DE DATOS (SUPABASE SQL)
+// 1. CONEXIÓN A SUPABASE SQL
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
-    logging: false, // Limpia la consola de logs innecesarios
+    logging: false,
     dialectOptions: {
         ssl: {
             require: true,
@@ -23,41 +23,29 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
     }
 });
 
-// 2. DEFINICIÓN DEL MODELO (CORREGIDO)
+// 2. MODELO (Configurado con Mayúscula para Registros)
 const Registro = sequelize.define('Registro', {
-    tipo: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    observaciones: {
-        type: DataTypes.TEXT,
-        allowNull: true
-    },
-    fotos: {
-        type: DataTypes.JSON, // Guardará el array de URLs de Supabase Storage
-        allowNull: false
-    }
+    tipo: { type: DataTypes.STRING, allowNull: false },
+    observaciones: { type: DataTypes.TEXT, allowNull: true },
+    fotos: { type: DataTypes.JSON, allowNull: false }
 }, {
-    // ESTAS LÍNEAS SON VITALES PARA QUE COINCIDA CON TU TABLA EN SUPABASE
-    tableName: 'Registros',
+    tableName: 'Registros', // Coincide con tu captura de Supabase
     freezeTableName: true,
     timestamps: true
 });
 
-// 3. RUTAS DE LA API
+// 3. RUTAS API
 
-// Obtener historial por tipo (Corte o Reposición)
+// Obtener historial
 app.get('/api/registros/:tipo', async (req, res) => {
     try {
         const { tipo } = req.params;
         const registros = await Registro.findAll({
-            where: { tipo: tipo },
+            where: { tipo },
             order: [['createdAt', 'DESC']]
         });
         res.json(registros);
     } catch (error) {
-        console.error('❌ Error SQL en GET:', error);
-        // Enviamos el mensaje real para diagnosticar rápido si falta una columna o permiso
         res.status(500).json({ error: 'Error al obtener historial', detalle: error.message });
     }
 });
@@ -66,40 +54,36 @@ app.get('/api/registros/:tipo', async (req, res) => {
 app.post('/api/upload', async (req, res) => {
     try {
         const { tipo, observaciones, fotos } = req.body;
-
-        if (!fotos || fotos.length === 0) {
-            return res.status(400).json({ error: 'No se recibieron URLs de fotos' });
-        }
-
-        const nuevoRegistro = await Registro.create({
-            tipo,
-            observaciones,
-            fotos // Array de URLs que vienen desde el frontend
-        });
-
-        res.json({ success: true, data: nuevoRegistro });
+        const nuevo = await Registro.create({ tipo, observaciones, fotos });
+        res.json({ success: true, data: nuevo });
     } catch (error) {
-        console.error('❌ Error SQL en POST:', error);
-        res.status(500).json({ error: 'Error al guardar en base de datos', detalle: error.message });
+        res.status(500).json({ error: 'Error al guardar', detalle: error.message });
     }
 });
 
-// 4. INICIO DEL SERVIDOR Y SINCRONIZACIÓN
-async function startServer() {
+// Eliminar registro
+app.delete('/api/registros/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const borrado = await Registro.destroy({ where: { id } });
+        if (borrado) {
+            res.json({ success: true, mensaje: 'Eliminado correctamente' });
+        } else {
+            res.status(404).json({ error: 'Registro no encontrado' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Error al eliminar', detalle: error.message });
+    }
+});
+
+// 4. ARRANQUE
+async function start() {
     try {
         await sequelize.authenticate();
-        console.log('✅ Base de Datos Conectada.');
-
-        // Sincroniza el modelo con la tabla existente
         await sequelize.sync();
-        console.log('✅ Tablas sincronizadas con Supabase.');
-
-        app.listen(PORT, () => {
-            console.log(`🚀 AquaBit OP listo en puerto ${PORT}`);
-        });
-    } catch (error) {
-        console.error('❌ No se pudo conectar a la base de datos:', error);
+        app.listen(PORT, () => console.log(`🚀 AquaBit OP en puerto ${PORT}`));
+    } catch (e) {
+        console.error('❌ Error de inicio:', e);
     }
 }
-
-startServer();
+start();

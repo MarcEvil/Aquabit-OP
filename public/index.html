@@ -4,273 +4,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AquaBit OP - Sistema de Terreno</title>
-    <style>
-        :root {
-            --primary: #2563eb;
-            --danger: #dc2626;
-            --bg: #f3f4f6;
-        }
-
-        body {
-            font-family: sans-serif;
-            background: var(--bg);
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 500px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Pestañas */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            background: #e5e7eb;
-            font-weight: bold;
-        }
-
-        .tab-btn.active {
-            background: var(--primary);
-            color: white;
-        }
-
-        /* Formularios */
-        .panel {
-            display: none;
-        }
-
-        .panel.active {
-            display: block;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        input[type="file"],
-        textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-sizing: border-box;
-        }
-
-        button.submit-btn {
-            width: 100%;
-            padding: 15px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        /* Listado de Registros */
-        .registro-card {
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            padding: 15px;
-            border-radius: 12px;
-            margin-top: 20px;
-        }
-
-        .fotos-grid {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 10px;
-        }
-
-        .fotos-grid img {
-            width: 120px;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
-
-        .btn-delete {
-            background: none;
-            color: var(--danger);
-            border: 1px solid var(--danger);
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .loading {
-            text-align: center;
-            color: #666;
-            font-style: italic;
-        }
-    </style>
+    <title>AquaBit OP - Terreno</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body>
+<body class="bg-gray-900 text-white p-4">
 
-    <div class="container">
-        <h2>🌊 AquaBit OP</h2>
+    <h1 class="text-2xl font-bold mb-6 text-blue-400">AquaBit Operaciones</h1>
 
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('corte')">CORTES</button>
-            <button class="tab-btn" onclick="switchTab('reposicion')">REPOSICIÓN</button>
-        </div>
+    <div class="flex gap-2 mb-6">
+        <button onclick="setTipo('corte')" id="btn-corte"
+            class="flex-1 p-3 rounded bg-blue-600 font-bold">Corte</button>
+        <button onclick="setTipo('reposicion')" id="btn-repo"
+            class="flex-1 p-3 rounded bg-gray-700 font-bold">Reposición</button>
+    </div>
 
-        <div id="panel-corte" class="panel active">
-            <form id="form-corte">
-                <div class="form-group">
-                    <label>Tomar 3 Fotos (Obligatorio)</label>
-                    <input type="file" id="fotos-corte" accept="image/*" multiple required>
-                </div>
-                <div class="form-group">
-                    <label>Observaciones</label>
-                    <textarea id="obs-corte" rows="3" placeholder="Detalles del corte..."></textarea>
-                </div>
-                <button type="submit" class="submit-btn">GUARDAR CORTE</button>
-            </form>
+    <div class="bg-gray-800 p-4 rounded-lg shadow-xl mb-8">
+        <input type="file" id="fotoInput" multiple accept="image/*" class="hidden">
+        <button onclick="document.getElementById('fotoInput').click()"
+            class="w-full bg-green-600 p-4 rounded mb-4 font-bold">📸 Tomar/Subir Fotos (3)</button>
 
-            <div id="lista-cortes">
-            </div>
-        </div>
+        <textarea id="obs" placeholder="Observaciones..."
+            class="w-full p-3 bg-gray-700 rounded mb-4 h-24 text-white"></textarea>
 
-        <div id="panel-reposicion" class="panel">
-            <form id="form-reposicion">
-                <div class="form-group">
-                    <label>Fotos Reposición</label>
-                    <input type="file" id="fotos-repo" accept="image/*" multiple>
-                </div>
-                <div class="form-group">
-                    <label>Observaciones</label>
-                    <textarea id="obs-repo" rows="3"></textarea>
-                </div>
-                <button type="submit" class="submit-btn">GUARDAR REPOSICIÓN</button>
-            </form>
-        </div>
+        <button id="btnEnviar" onclick="enviar()"
+            class="w-full bg-blue-500 p-4 rounded font-bold disabled:opacity-50">Guardar Registro</button>
+    </div>
+
+    <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Historial Reciente</h2>
+    <div id="historial" class="space-y-4">
     </div>
 
     <script>
-        const API_URL = 'https://aquabit-op.onrender.com/api';
+        let tipoActual = 'corte';
+        const API_URL = '/api';
 
-        // 1. Lógica de Pestañas
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-
-            event.target.classList.add('active');
-            document.getElementById(`panel-${tab}`).classList.add('active');
-
-            if (tab === 'corte') cargarRegistros('corte');
+        function setTipo(t) {
+            tipoActual = t;
+            document.getElementById('btn-corte').className = t === 'corte' ? 'flex-1 p-3 rounded bg-blue-600 font-bold' : 'flex-1 p-3 rounded bg-gray-700 font-bold';
+            document.getElementById('btn-repo').className = t === 'reposicion' ? 'flex-1 p-3 rounded bg-blue-600 font-bold' : 'flex-1 p-3 rounded bg-gray-700 font-bold';
+            cargarHistorial();
         }
 
-        // 2. Enviar Datos al Servidor
-        document.getElementById('form-corte').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = e.target.querySelector('button');
-            btn.disabled = true;
-            btn.innerText = 'Subiendo a Supabase...';
+        async function cargarHistorial() {
+            const res = await fetch(`${API_URL}/registros/${tipoActual}`);
+            const datos = await res.json();
+            const contenedor = document.getElementById('historial');
+            contenedor.innerHTML = '';
 
-            const formData = new FormData();
-            const fotos = document.getElementById('fotos-corte').files;
-
-            if (fotos.length !== 3) {
-                alert("Debes seleccionar exactamente 3 fotos para el Corte.");
-                btn.disabled = false;
-                btn.innerText = 'GUARDAR CORTE';
+            if (datos.error) {
+                contenedor.innerHTML = `<p class="text-red-400">${datos.error}</p>`;
                 return;
             }
 
-            formData.append('tipo', 'corte');
-            formData.append('observaciones', document.getElementById('obs-corte').value);
-            for (let i = 0; i < fotos.length; i++) {
-                formData.append('fotos', fotos[i]);
-            }
-
-            try {
-                const res = await fetch(`${API_URL}/upload`, { method: 'POST', body: formData });
-                if (res.ok) {
-                    alert('✅ Registro guardado con éxito');
-                    e.target.reset();
-                    cargarRegistros('corte');
-                }
-            } catch (err) {
-                alert('❌ Error al conectar con el servidor');
-            } finally {
-                btn.disabled = false;
-                btn.innerText = 'GUARDAR CORTE';
-            }
-        });
-
-        // 3. Cargar Listado (Hacia abajo)
-        async function cargarRegistros(tipo) {
-            const contenedor = document.getElementById('lista-cortes');
-            contenedor.innerHTML = '<p class="loading">Cargando historial...</p>';
-
-            try {
-                const res = await fetch(`${API_URL}/registros/${tipo}`);
-                const datos = await res.json();
-
-                contenedor.innerHTML = '<h3>Historial de Cortes</h3>';
-
-                datos.forEach(reg => {
-                    const card = document.createElement('div');
-                    card.className = 'registro-card';
-                    card.innerHTML = `
-                    <div class="fotos-grid">
-                        ${reg.fotos.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('')}
+            datos.forEach(reg => {
+                const div = document.createElement('div');
+                div.className = 'bg-gray-800 p-3 rounded shadow relative';
+                div.innerHTML = `
+                    <button onclick="eliminar(${reg.id})" class="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded">X</button>
+                    <p class="text-xs text-gray-400">${new Date(reg.createdAt).toLocaleString()}</p>
+                    <p class="my-2">${reg.observaciones || 'Sin observaciones'}</p>
+                    <div class="flex gap-1 overflow-x-auto">
+                        ${reg.fotos.map(url => `<img src="${url}" class="h-20 w-20 object-cover rounded">`).join('')}
                     </div>
-                    <p><strong>Fecha:</strong> ${new Date(reg.createdAt).toLocaleString()}</p>
-                    <p><strong>Obs:</strong> ${reg.observaciones || 'Sin notas'}</p>
-                    <button class="btn-delete" onclick="eliminarRegistro(${reg.id})">🗑️ Eliminar fotos</button>
                 `;
-                    contenedor.appendChild(card);
-                });
-            } catch (err) {
-                contenedor.innerHTML = '<p>Error al cargar historial.</p>';
-            }
+                contenedor.appendChild(div);
+            });
         }
 
-        // 4. Eliminar Registro
-        async function eliminarRegistro(id) {
-            if (!confirm('¿Seguro que quieres eliminar este grupo de fotos?')) return;
-
-            try {
-                const res = await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
-                if (res.ok) cargarRegistros('corte');
-            } catch (err) {
-                alert('No se pudo eliminar');
-            }
+        async function eliminar(id) {
+            if (!confirm('¿Eliminar este registro?')) return;
+            await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
+            cargarHistorial();
         }
 
-        // Cargar datos al iniciar
-        window.onload = () => cargarRegistros('corte');
+        async function enviar() {
+            // Lógica de subida (Debe implementar Supabase Storage en el frontend para obtener las URLs)
+            // Aquí llamarías a tu función de subida y luego al POST de /api/upload
+            alert('Asegúrate de integrar tu script de subida a Supabase Storage aquí.');
+        }
 
+        cargarHistorial();
     </script>
-
 </body>
 
 </html>
