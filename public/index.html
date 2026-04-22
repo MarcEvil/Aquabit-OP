@@ -183,6 +183,7 @@
             }
         }
 
+
         async function enviarRegistro() {
             if (fotosParaSubir.length === 0) return alert("Captura evidencia visual.");
             if (tipoActual === 'corte' && fotosParaSubir.length < 3) return alert("Protocolo de Corte requiere 3 fotos.");
@@ -194,19 +195,22 @@
             try {
                 const urlsFinales = [];
                 for (let file of fotosParaSubir) {
+                    // 1. Generamos nombre con extensión .jpg
                     const fileName = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 4)}.jpg`;
 
-                    // SUBIDA CORREGIDA: Enviamos el objeto 'file' real (binario)
+                    // 2. Subida forzando el contentType a image/jpeg (estándar para .jpg)
+                    // Usamos el archivo binario directo para evitar pérdida de datos
                     const { data, error } = await supabaseClient.storage
                         .from('fotos-aquabit')
                         .upload(fileName, file, {
                             cacheControl: '3600',
                             upsert: false,
-                            contentType: 'image/jpeg'
+                            contentType: 'image/jpeg' // MIME tipo estándar para .jpg y .jpeg
                         });
 
-                    if (error) throw new Error("Fallo en Storage: " + error.message);
+                    if (error) throw new Error("Error en Storage: " + error.message);
 
+                    // 3. Obtención de la URL pública
                     const { data: { publicUrl } } = supabaseClient.storage
                         .from('fotos-aquabit')
                         .getPublicUrl(fileName);
@@ -218,11 +222,15 @@
                 const res = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tipo: tipoActual, observaciones: document.getElementById('obs').value, fotos: urlsFinales })
+                    body: JSON.stringify({
+                        tipo: tipoActual,
+                        observaciones: document.getElementById('obs').value,
+                        fotos: urlsFinales
+                    })
                 });
 
                 if (res.ok) {
-                    alert("✅ Registro guardado exitosamente.");
+                    alert("✅ Registro sincronizado con éxito");
                     location.reload();
                 } else {
                     throw new Error("El servidor de Render no respondió.");
