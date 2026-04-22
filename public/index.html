@@ -29,14 +29,6 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .card-hover {
-            transition: transform 0.2s ease;
-        }
-
-        .card-hover:active {
-            transform: scale(0.98);
-        }
-
         @media (min-width: 768px) {
             .main-container {
                 max-width: 800px;
@@ -54,74 +46,62 @@
                     class="font-extrabold text-2xl tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
                     AQUABIT <span class="font-light text-white">OP</span>
                 </h1>
-                <p class="text-[9px] text-blue-400/80 tracking-[0.2em] font-bold uppercase">Gestión de Suministros v2.5
-                </p>
+                <p class="text-[9px] text-blue-400/80 tracking-[0.2em] font-bold uppercase text-left">Gestión de
+                    Suministros v2.5</p>
             </div>
-            <div id="connectionStatus"
-                class="flex items-center gap-2 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
+            <div class="flex items-center gap-2 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
                 <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                <span class="text-[10px] font-bold text-green-500">SISTEMA ONLINE</span>
+                <span class="text-[10px] font-bold text-green-500 uppercase">Sistema Online</span>
             </div>
         </div>
     </header>
 
     <main class="main-container mx-auto px-4 pb-24">
-
         <div class="flex gap-2 mb-8 bg-black/40 p-1.5 rounded-2xl border border-white/5">
             <button onclick="setTipo('corte')" id="btn-corte"
-                class="btn-transition flex-1 py-3 rounded-xl font-bold text-sm tracking-wide">
-                ORDEN DE CORTE
-            </button>
+                class="btn-transition flex-1 py-3 rounded-xl font-bold text-sm tracking-wide">ORDEN DE CORTE</button>
             <button onclick="setTipo('reposicion')" id="btn-repo"
-                class="btn-transition flex-1 py-3 rounded-xl font-bold text-sm tracking-wide">
-                REPOSICIÓN
-            </button>
+                class="btn-transition flex-1 py-3 rounded-xl font-bold text-sm tracking-wide">REPOSICIÓN</button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
             <section>
                 <div class="glass p-6 rounded-[2.5rem] shadow-2xl border border-white/10 sticky top-24">
-                    <h3 class="text-sm font-bold text-gray-400 mb-4 flex items-center gap-2">
-                        <span class="w-1 h-4 bg-blue-500 rounded-full"></span> NUEVO REGISTRO
+                    <h3
+                        class="text-sm font-bold text-gray-400 mb-4 flex items-center gap-2 uppercase tracking-widest text-left">
+                        <span class="w-1 h-4 bg-blue-500 rounded-full"></span> Nuevo Registro
                     </h3>
 
                     <input type="file" id="fotoInput" accept="image/*" capture="environment" class="hidden"
                         onchange="procesarFoto()">
 
                     <button onclick="document.getElementById('fotoInput').click()"
-                        class="group w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 p-6 rounded-3xl mb-4 font-bold flex flex-col items-center justify-center gap-2 btn-transition shadow-lg shadow-blue-900/40 border border-white/10">
-                        <span class="text-3xl group-active:scale-90 transition-transform">📸</span>
+                        class="group w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 p-6 rounded-3xl mb-4 font-bold flex flex-col items-center justify-center gap-2 btn-transition shadow-lg border border-white/10">
+                        <span class="text-3xl">📸</span>
                         <span id="txtBtnCamara" class="text-xs uppercase tracking-widest">Capturar Evidencia</span>
                     </button>
 
                     <div id="listaFotos" class="flex gap-3 overflow-x-auto mb-6 scrollbar-hide py-2"></div>
 
-                    <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block">OBSERVACIONES DE CAMPO</label>
-                    <textarea id="obs" placeholder="Ej: Medidor con sello roto, difícil acceso..."
-                        class="w-full p-4 bg-black/30 border border-white/5 rounded-2xl mb-6 h-32 text-white text-sm outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-gray-700"></textarea>
+                    <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase text-left">Observaciones
+                        de Campo</label>
+                    <textarea id="obs" placeholder="Ej: Medidor con sello roto..."
+                        class="w-full p-4 bg-black/30 border border-white/5 rounded-2xl mb-6 h-32 text-white text-sm outline-none focus:border-blue-500/50 transition-all placeholder:text-gray-700"></textarea>
 
                     <button id="btnEnviar" onclick="enviarRegistro()"
-                        class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 p-5 rounded-2xl font-black text-sm tracking-widest uppercase disabled:opacity-30 disabled:grayscale btn-transition shadow-xl shadow-emerald-900/20">
-                        SINCRONIZAR DATOS
+                        class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 p-5 rounded-2xl font-black text-sm tracking-widest uppercase disabled:opacity-30 btn-transition shadow-xl">
+                        Sincronizar Datos
                     </button>
                 </div>
             </section>
 
             <section>
-                <div class="flex items-center justify-between mb-4 px-2">
-                    <h2 class="font-extrabold text-lg tracking-tight">HISTORIAL <span id="labelTipo"
+                <div class="flex items-center justify-between mb-4 px-2 uppercase">
+                    <h2 class="font-extrabold text-lg tracking-tight">Historial <span id="labelTipo"
                             class="text-blue-400">CORTE</span></h2>
-                    <span class="text-[10px] text-gray-500 font-mono" id="countLabel">0 REGISTROS</span>
+                    <span class="text-[10px] text-gray-500 font-mono font-bold" id="countLabel">0 Registros</span>
                 </div>
-
-                <div id="historialContenedor" class="space-y-4">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500 mb-4">
-                        </div>
-                        <p class="text-gray-600 text-xs font-bold tracking-widest">CONECTANDO A RENDER...</p>
-                    </div>
-                </div>
+                <div id="historialContenedor" class="space-y-4"></div>
             </section>
         </div>
     </main>
@@ -154,9 +134,9 @@
             const input = document.getElementById('fotoInput');
             if (input.files && input.files) {
                 const file = input.files;
-                fotosParaSubir.push(file);
+                fotosParaSubir.push(file); // Guardamos el objeto FILE real
                 const wrapper = document.createElement('div');
-                wrapper.className = "relative flex-shrink-0 animate-bounce-in";
+                wrapper.className = "relative flex-shrink-0";
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
                 img.className = "h-20 w-20 object-cover rounded-2xl border-2 border-blue-500/50 shadow-md";
@@ -171,40 +151,33 @@
                 const res = await fetch(`${API_URL}/registros/${tipoActual}`);
                 const data = await res.json();
                 document.getElementById('countLabel').innerText = `${data.length} REGISTROS`;
-                listado.innerHTML = data.length === 0 ? '<div class="glass p-10 rounded-3xl text-center text-gray-600 text-xs font-bold tracking-widest">BANDEJA DE ENTRADA VACÍA</div>' : '';
+                listado.innerHTML = data.length === 0 ? '<div class="glass p-10 rounded-3xl text-center text-gray-600 text-xs font-bold tracking-widest uppercase">Bandeja Vacía</div>' : '';
 
                 data.forEach(reg => {
                     const card = document.createElement('div');
-                    card.className = 'glass p-5 rounded-[2rem] border-l-4 ' + (tipoActual === 'corte' ? 'border-blue-500' : 'border-emerald-500') + ' card-hover shadow-lg mb-4';
-
+                    card.className = 'glass p-5 rounded-[2rem] border-l-4 ' + (tipoActual === 'corte' ? 'border-blue-500' : 'border-emerald-500') + ' shadow-lg mb-4';
                     const isRepo = tipoActual === 'reposicion';
-                    const checkbox = isRepo ? '<input type="checkbox" class="w-6 h-6 mr-3 accent-emerald-500 rounded-lg bg-black/40 border-white/10">' : '';
+                    const checkbox = isRepo ? '<input type="checkbox" class="w-6 h-6 mr-3 accent-emerald-500 rounded-lg">' : '';
 
                     card.innerHTML = `
                         <div class="flex justify-between items-center mb-4">
-                            <span class="text-[9px] text-gray-500 font-black uppercase tracking-tighter bg-black/30 px-2 py-1 rounded-md">
-                                📅 ${new Date(reg.createdAt).toLocaleString()}
+                            <span class="text-[9px] text-gray-500 font-black uppercase tracking-tighter bg-black/30 px-2 py-1 rounded-md italic">
+                                ${new Date(reg.createdAt).toLocaleString()}
                             </span>
                             <div class="flex items-center gap-2">
                                 ${checkbox}
-                                <button onclick="eliminarRegistro(${reg.id})" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-xl text-[9px] font-black border border-red-500/20 transition-all uppercase tracking-widest">
-                                    ELIMINAR
-                                </button>
+                                <button onclick="eliminarRegistro(${reg.id})" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-xl text-[9px] font-black border border-red-500/20 transition-all uppercase tracking-widest">Eliminar</button>
                             </div>
                         </div>
-                        <p class="text-gray-300 text-xs mb-4 leading-relaxed font-medium italic">"${reg.observaciones || 'Sin notas adicionales.'}"</p>
+                        <p class="text-gray-300 text-sm mb-4 leading-relaxed font-medium italic text-left">"${reg.observaciones || 'Sin notas.'}"</p>
                         <div class="flex gap-2 overflow-x-auto scrollbar-hide py-1">
-                            ${reg.fotos.map(url => `
-                                <img src="${url}" 
-                                     onerror="this.src='https://via.placeholder.com/150?text=Error'" 
-                                     class="h-20 w-20 object-cover rounded-xl border border-white/5 hover:border-blue-500/50 transition-colors">
-                            `).join('')}
+                            ${reg.fotos.map(url => `<img src="${url}" onerror="this.src='https://via.placeholder.com/150?text=Error'" class="h-20 w-20 object-cover rounded-xl border border-white/5">`).join('')}
                         </div>
                     `;
                     listado.appendChild(card);
                 });
             } catch (err) {
-                listado.innerHTML = '<div class="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl text-red-500 text-center text-xs font-bold">ERROR DE SINCRONIZACIÓN CON RENDER</div>';
+                listado.innerHTML = '<div class="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl text-red-500 text-center text-xs font-bold uppercase">Error de Sincronización</div>';
             }
         }
 
@@ -220,9 +193,21 @@
                 const urlsFinales = [];
                 for (let file of fotosParaSubir) {
                     const fileName = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 4)}.jpg`;
-                    const { error } = await supabaseClient.storage.from('fotos-aquabit').upload(fileName, file);
-                    if (error) throw new Error("Storage: " + error.message);
-                    const { data: { publicUrl } } = supabaseClient.storage.from('fotos-aquabit').getPublicUrl(fileName);
+
+                    // CORRECCIÓN CRÍTICA: Subir el 'file' directamente, no el nombre.
+                    const { data, error } = await supabaseClient.storage
+                        .from('fotos-aquabit')
+                        .upload(fileName, file, {
+                            contentType: 'image/jpeg',
+                            upsert: false
+                        });
+
+                    if (error) throw new Error("Error en Storage: " + error.message);
+
+                    const { data: { publicUrl } } = supabaseClient.storage
+                        .from('fotos-aquabit')
+                        .getPublicUrl(fileName);
+
                     urlsFinales.push(publicUrl);
                 }
 
@@ -234,9 +219,10 @@
                 });
 
                 if (res.ok) {
+                    alert("✅ Registro guardado exitosamente.");
                     location.reload();
                 } else {
-                    throw new Error("Render Offline");
+                    throw new Error("El servidor de Render no respondió.");
                 }
             } catch (err) {
                 alert("ERROR: " + err.message);
@@ -246,11 +232,11 @@
         }
 
         async function eliminarRegistro(id) {
-            if (!confirm('¿Eliminar registro?')) return;
+            if (!confirm('¿Eliminar registro permanentemente?')) return;
             try {
                 const res = await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
                 if (res.ok) cargarHistorial();
-            } catch (e) { alert("Error de conexión."); }
+            } catch (e) { alert("Error al conectar con el servidor."); }
         }
 
         setTipo('corte');
