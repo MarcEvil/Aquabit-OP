@@ -4,63 +4,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AquaBit OP - Terreno</title>
+    <title>AquaBit OP - Sistema de Terreno</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top right, #111827, #000000);
+            min-height: 100vh;
+        }
+
+        .glass {
+            background: rgba(31, 41, 55, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
         .scrollbar-hide::-webkit-scrollbar {
             display: none;
         }
 
-        .active-tab {
-            background-color: #2563eb !important;
-            border-color: #3b82f6;
+        .btn-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hover {
+            transition: transform 0.2s ease;
+        }
+
+        .card-hover:active {
+            transform: scale(0.98);
+        }
+
+        @media (min-width: 768px) {
+            .main-container {
+                max-width: 800px;
+            }
         }
     </style>
 </head>
 
-<body class="bg-gray-900 text-white font-sans">
+<body class="text-gray-100 antialiased">
 
-    <header class="p-4 border-b border-gray-800 text-center font-bold text-blue-400">💧 AquaBit Operaciones</header>
+    <header class="sticky top-0 z-50 glass border-b border-white/10 p-4 mb-6">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div>
+                <h1
+                    class="font-extrabold text-2xl tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
+                    AQUABIT <span class="font-light text-white">OP</span>
+                </h1>
+                <p class="text-[9px] text-blue-400/80 tracking-[0.2em] font-bold uppercase">Gestión de Suministros v2.5
+                </p>
+            </div>
+            <div id="connectionStatus"
+                class="flex items-center gap-2 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
+                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <span class="text-[10px] font-bold text-green-500">SISTEMA ONLINE</span>
+            </div>
+        </div>
+    </header>
 
-    <main class="p-4 max-w-md mx-auto">
-        <div class="flex gap-2 mb-6">
+    <main class="main-container mx-auto px-4 pb-24">
+
+        <div class="flex gap-2 mb-8 bg-black/40 p-1.5 rounded-2xl border border-white/5">
             <button onclick="setTipo('corte')" id="btn-corte"
-                class="flex-1 p-3 rounded-xl bg-blue-600 font-bold border border-transparent transition-all">Corte</button>
+                class="btn-transition flex-1 py-3 rounded-xl font-bold text-sm tracking-wide">
+                ORDEN DE CORTE
+            </button>
             <button onclick="setTipo('reposicion')" id="btn-repo"
-                class="flex-1 p-3 rounded-xl bg-gray-800 font-bold border border-gray-700 transition-all">Reposición</button>
+                class="btn-transition flex-1 py-3 rounded-xl font-bold text-sm tracking-wide">
+                REPOSICIÓN
+            </button>
         </div>
 
-        <section class="bg-gray-800 p-5 rounded-2xl border border-gray-700 shadow-xl">
-            <input type="file" id="fotoInput" accept="image/*" capture="environment" class="hidden"
-                onchange="procesarFoto()">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-            <button onclick="document.getElementById('fotoInput').click()"
-                class="w-full bg-blue-600 p-4 rounded-xl mb-4 font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
-                📸 <span id="txtBtnCamara">Tomar Fotos (Mín. 3)</span>
-            </button>
+            <section>
+                <div class="glass p-6 rounded-[2.5rem] shadow-2xl border border-white/10 sticky top-24">
+                    <h3 class="text-sm font-bold text-gray-400 mb-4 flex items-center gap-2">
+                        <span class="w-1 h-4 bg-blue-500 rounded-full"></span> NUEVO REGISTRO
+                    </h3>
 
-            <div id="listaFotos" class="flex gap-2 overflow-x-auto mb-4 scrollbar-hide"></div>
+                    <input type="file" id="fotoInput" accept="image/*" capture="environment" class="hidden"
+                        onchange="procesarFoto()">
 
-            <textarea id="obs" placeholder="Observaciones del terreno..."
-                class="w-full p-4 bg-gray-900 border border-gray-700 rounded-xl mb-4 h-24 text-white text-sm outline-none focus:border-blue-500"></textarea>
+                    <button onclick="document.getElementById('fotoInput').click()"
+                        class="group w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 p-6 rounded-3xl mb-4 font-bold flex flex-col items-center justify-center gap-2 btn-transition shadow-lg shadow-blue-900/40 border border-white/10">
+                        <span class="text-3xl group-active:scale-90 transition-transform">📸</span>
+                        <span id="txtBtnCamara" class="text-xs uppercase tracking-widest">Capturar Evidencia</span>
+                    </button>
 
-            <button id="btnEnviar" onclick="enviarRegistro()"
-                class="w-full bg-green-600 p-4 rounded-xl font-bold disabled:opacity-50 transition-all shadow-lg shadow-green-900/20">
-                GUARDAR EN HISTORIAL
-            </button>
-        </section>
+                    <div id="listaFotos" class="flex gap-3 overflow-x-auto mb-6 scrollbar-hide py-2"></div>
 
-        <h2 class="text-lg font-bold my-5 flex justify-between items-center px-1">
-            Historial de <span id="labelTipo" class="text-blue-400">Corte</span>
-            <span class="text-[10px] text-gray-500">🟢 Sistema Activo</span>
-        </h2>
-        <div id="historialContenedor" class="space-y-4 pb-24 text-sm text-center italic text-gray-500">Cargando datos...
+                    <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block">OBSERVACIONES DE CAMPO</label>
+                    <textarea id="obs" placeholder="Ej: Medidor con sello roto, difícil acceso..."
+                        class="w-full p-4 bg-black/30 border border-white/5 rounded-2xl mb-6 h-32 text-white text-sm outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-gray-700"></textarea>
+
+                    <button id="btnEnviar" onclick="enviarRegistro()"
+                        class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 p-5 rounded-2xl font-black text-sm tracking-widest uppercase disabled:opacity-30 disabled:grayscale btn-transition shadow-xl shadow-emerald-900/20">
+                        SINCRONIZAR DATOS
+                    </button>
+                </div>
+            </section>
+
+            <section>
+                <div class="flex items-center justify-between mb-4 px-2">
+                    <h2 class="font-extrabold text-lg tracking-tight">HISTORIAL <span id="labelTipo"
+                            class="text-blue-400">CORTE</span></h2>
+                    <span class="text-[10px] text-gray-500 font-mono" id="countLabel">0 REGISTROS</span>
+                </div>
+
+                <div id="historialContenedor" class="space-y-4">
+                    <div class="text-center py-20">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500 mb-4">
+                        </div>
+                        <p class="text-gray-600 text-xs font-bold tracking-widest">CONECTANDO A RENDER...</p>
+                    </div>
+                </div>
+            </section>
         </div>
     </main>
 
     <script>
-        // CONFIGURACIÓN INTEGRADA
         const SUPABASE_URL = 'https://mjxpqxyxkshtqlptccto.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qeHBxeHl4a3NodHFscHRjY3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MzQyOTAsImV4cCI6MjA5MjMxMDI5MH0.KGi6VT8g-zKeEi0NWHpkdzdKHP1mF11Ch0Q-46c2Wps';
         const API_URL = 'https://aquabit-op.onrender.com/api';
@@ -71,26 +137,31 @@
 
         function setTipo(t) {
             tipoActual = t;
-            fotosParaSubir = []; // Limpiar fotos al cambiar de pestaña
+            fotosParaSubir = [];
             document.getElementById('listaFotos').innerHTML = '';
-            document.getElementById('labelTipo').innerText = t === 'corte' ? 'Corte' : 'Reposición';
+            document.getElementById('obs').value = '';
+            document.getElementById('labelTipo').innerText = t === 'corte' ? 'CORTE' : 'REPOSICIÓN';
             document.getElementById('txtBtnCamara').innerText = t === 'corte' ? 'Tomar Fotos (Mín. 3)' : 'Tomar Foto (Mín. 1)';
 
-            document.getElementById('btn-corte').className = t === 'corte' ? 'flex-1 p-3 rounded-xl bg-blue-600 font-bold transition-all' : 'flex-1 p-3 rounded-xl bg-gray-800 font-bold transition-all';
-            document.getElementById('btn-repo').className = t === 'reposicion' ? 'flex-1 p-3 rounded-xl bg-blue-600 font-bold transition-all' : 'flex-1 p-3 rounded-xl bg-gray-800 font-bold transition-all';
+            const isCorte = t === 'corte';
+            document.getElementById('btn-corte').className = isCorte ? 'btn-transition flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-900/40' : 'btn-transition flex-1 py-3 rounded-xl bg-transparent text-gray-500 font-bold hover:text-gray-300';
+            document.getElementById('btn-repo').className = !isCorte ? 'btn-transition flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-900/40' : 'btn-transition flex-1 py-3 rounded-xl bg-transparent text-gray-500 font-bold hover:text-gray-300';
 
             cargarHistorial();
         }
 
         function procesarFoto() {
             const input = document.getElementById('fotoInput');
-            const file = input.files;
-            if (file) {
-                fotosParaSubir.push(file); // Se añade al array, no reemplaza
+            if (input.files && input.files) {
+                const file = input.files;
+                fotosParaSubir.push(file);
+                const wrapper = document.createElement('div');
+                wrapper.className = "relative flex-shrink-0 animate-bounce-in";
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
-                img.className = "h-20 w-20 object-cover rounded-lg border-2 border-blue-500 flex-shrink-0 shadow-md";
-                document.getElementById('listaFotos').appendChild(img);
+                img.className = "h-20 w-20 object-cover rounded-2xl border-2 border-blue-500/50 shadow-md";
+                wrapper.appendChild(img);
+                document.getElementById('listaFotos').appendChild(wrapper);
             }
         }
 
@@ -99,85 +170,89 @@
             try {
                 const res = await fetch(`${API_URL}/registros/${tipoActual}`);
                 const data = await res.json();
-                listado.innerHTML = data.length === 0 ? 'No hay registros pendientes.' : '';
+                document.getElementById('countLabel').innerText = `${data.length} REGISTROS`;
+                listado.innerHTML = data.length === 0 ? '<div class="glass p-10 rounded-3xl text-center text-gray-600 text-xs font-bold tracking-widest">BANDEJA DE ENTRADA VACÍA</div>' : '';
 
                 data.forEach(reg => {
                     const card = document.createElement('div');
-                    card.className = 'bg-gray-800 p-4 rounded-xl border-l-4 ' + (tipoActual === 'corte' ? 'border-blue-500' : 'border-green-500') + ' relative shadow-md';
+                    card.className = 'glass p-5 rounded-[2rem] border-l-4 ' + (tipoActual === 'corte' ? 'border-blue-500' : 'border-emerald-500') + ' card-hover shadow-lg mb-4';
 
-                    const checkbox = tipoActual === 'reposicion' ? '<input type="checkbox" class="w-6 h-6 mr-2 accent-green-500">' : '';
+                    const isRepo = tipoActual === 'reposicion';
+                    const checkbox = isRepo ? '<input type="checkbox" class="w-6 h-6 mr-3 accent-emerald-500 rounded-lg bg-black/40 border-white/10">' : '';
 
                     card.innerHTML = `
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="text-[10px] text-gray-500 uppercase font-mono">${new Date(reg.createdAt).toLocaleString()}</span>
-                            <div class="flex items-center">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-[9px] text-gray-500 font-black uppercase tracking-tighter bg-black/30 px-2 py-1 rounded-md">
+                                📅 ${new Date(reg.createdAt).toLocaleString()}
+                            </span>
+                            <div class="flex items-center gap-2">
                                 ${checkbox}
-                                <button onclick="eliminar(${reg.id})" class="text-gray-600 hover:text-red-500 ml-3 font-bold">✕</button>
+                                <button onclick="eliminarRegistro(${reg.id})" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-xl text-[9px] font-black border border-red-500/20 transition-all uppercase tracking-widest">
+                                    ELIMINAR
+                                </button>
                             </div>
                         </div>
-                        <p class="text-white text-sm mb-3 text-left leading-relaxed">${reg.observaciones || '---'}</p>
-                        <div class="flex gap-2 overflow-x-auto scrollbar-hide">
-                            ${reg.fotos.map(url => `<img src="${url}" class="h-16 w-16 object-cover rounded-md border border-gray-700">`).join('')}
+                        <p class="text-gray-300 text-xs mb-4 leading-relaxed font-medium italic">"${reg.observaciones || 'Sin notas adicionales.'}"</p>
+                        <div class="flex gap-2 overflow-x-auto scrollbar-hide py-1">
+                            ${reg.fotos.map(url => `
+                                <img src="${url}" 
+                                     onerror="this.src='https://via.placeholder.com/150?text=Error'" 
+                                     class="h-20 w-20 object-cover rounded-xl border border-white/5 hover:border-blue-500/50 transition-colors">
+                            `).join('')}
                         </div>
                     `;
                     listado.appendChild(card);
                 });
             } catch (err) {
-                listado.innerHTML = '<p class="text-red-500">Error al conectar con Render.</p>';
+                listado.innerHTML = '<div class="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl text-red-500 text-center text-xs font-bold">ERROR DE SINCRONIZACIÓN CON RENDER</div>';
             }
         }
 
         async function enviarRegistro() {
-            if (fotosParaSubir.length === 0) return alert("Por favor, captura las fotos necesarias.");
-            if (tipoActual === 'corte' && fotosParaSubir.length < 3) return alert("El protocolo de Corte exige 3 fotos.");
+            if (fotosParaSubir.length === 0) return alert("Captura evidencia visual.");
+            if (tipoActual === 'corte' && fotosParaSubir.length < 3) return alert("Protocolo de Corte requiere 3 fotos.");
 
             const btn = document.getElementById('btnEnviar');
             btn.disabled = true;
-            btn.innerText = "SUBIENDO A SUPABASE...";
+            btn.innerText = "⚡ SUBIENDO...";
 
             try {
                 const urlsFinales = [];
                 for (let file of fotosParaSubir) {
-                    const name = `terreno_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
-                    const { error } = await supabaseClient.storage.from('fotos-aquabit').upload(name, file);
-                    if (error) throw new Error("Error en Storage: " + error.message);
-
-                    const { data: { publicUrl } } = supabaseClient.storage.from('fotos-aquabit').getPublicUrl(name);
+                    const fileName = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 4)}.jpg`;
+                    const { error } = await supabaseClient.storage.from('fotos-aquabit').upload(fileName, file);
+                    if (error) throw new Error("Storage: " + error.message);
+                    const { data: { publicUrl } } = supabaseClient.storage.from('fotos-aquabit').getPublicUrl(fileName);
                     urlsFinales.push(publicUrl);
                 }
 
-                btn.innerText = "GUARDANDO EN BASE DE DATOS...";
+                btn.innerText = "💾 REGISTRANDO...";
                 const res = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        tipo: tipoActual,
-                        observaciones: document.getElementById('obs').value,
-                        fotos: urlsFinales
-                    })
+                    body: JSON.stringify({ tipo: tipoActual, observaciones: document.getElementById('obs').value, fotos: urlsFinales })
                 });
 
                 if (res.ok) {
-                    alert("✅ Registro guardado correctamente.");
                     location.reload();
                 } else {
-                    throw new Error("El servidor de Render no respondió.");
+                    throw new Error("Render Offline");
                 }
-
             } catch (err) {
-                alert("❌ ERROR: " + err.message);
+                alert("ERROR: " + err.message);
                 btn.disabled = false;
-                btn.innerText = "GUARDAR EN HISTORIAL";
+                btn.innerText = "SINCRONIZAR DATOS";
             }
         }
 
-        async function eliminar(id) {
-            if (!confirm('¿Confirma la eliminación?')) return;
-            await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
-            cargarHistorial();
+        async function eliminarRegistro(id) {
+            if (!confirm('¿Eliminar registro?')) return;
+            try {
+                const res = await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
+                if (res.ok) cargarHistorial();
+            } catch (e) { alert("Error de conexión."); }
         }
 
-        // Iniciar con la pestaña de Corte
         setTipo('corte');
     </script>
 </body>
