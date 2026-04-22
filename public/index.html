@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AquaBit OP - Sistema de Terreno</title>
+    <title>AquaBit OP - Gestión de Terreno</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -71,49 +71,22 @@
             font-weight: bold;
         }
 
-        /* Contenedor de Vista Previa */
         .preview-container {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             overflow-x: auto;
-            margin: 10px 0;
+            margin-bottom: 15px;
             padding: 10px;
-            min-height: 140px;
             border: 2px dashed #ccc;
             border-radius: 8px;
             background: #fafafa;
         }
 
-        /* Item de Vista Previa con Checkbox */
-        .preview-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            flex-shrink: 0;
-            background: white;
-            padding: 5px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
-
         .preview-item img {
-            width: 90px;
-            height: 90px;
+            width: 80px;
+            height: 80px;
             object-fit: cover;
-            border-radius: 5px;
-        }
-
-        .preview-item label {
-            font-size: 10px;
-            font-weight: bold;
-            color: #444;
-        }
-
-        .preview-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
+            border-radius: 6px;
         }
 
         textarea {
@@ -122,7 +95,7 @@
             border: 1px solid #ccc;
             border-radius: 8px;
             box-sizing: border-box;
-            margin-top: 10px;
+            margin-bottom: 10px;
         }
 
         .submit-btn {
@@ -132,16 +105,16 @@
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
             font-weight: bold;
+            cursor: pointer;
         }
 
-        /* Historial */
-        .historial-section {
+        /* Estilos Historial Permanente */
+        .historial-title {
             margin-top: 30px;
             border-top: 2px solid #eee;
-            padding-top: 20px;
+            padding-top: 15px;
+            color: #374151;
         }
 
         .registro-card {
@@ -150,28 +123,46 @@
             padding: 15px;
             border-radius: 12px;
             margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .fotos-grid {
             display: flex;
             gap: 8px;
             overflow-x: auto;
-            padding-bottom: 10px;
+            margin-bottom: 10px;
         }
 
         .fotos-grid img {
             width: 100px;
             height: 100px;
             object-fit: cover;
-            border-radius: 6px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .status-repuesto {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
         }
 
         .btn-delete {
             color: var(--danger);
-            border: 1px solid var(--danger);
             background: none;
+            border: 1px solid var(--danger);
             padding: 5px 10px;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 11px;
             margin-top: 10px;
@@ -185,176 +176,141 @@
         <h2>🌊 AquaBit OP</h2>
 
         <div class="tabs">
-            <button id="tab-corte-btn" class="tab-btn active" onclick="cambiarTab('corte')">CORTES</button>
-            <button id="tab-repo-btn" class="tab-btn" onclick="cambiarTab('reposicion')">REPOSICIÓN</button>
+            <button id="btn-tab-corte" class="tab-btn active" onclick="cambiarPestaña('corte')">CORTES</button>
+            <button id="btn-tab-repo" class="tab-btn" onclick="cambiarPestaña('reposicion')">REPOSICIÓN</button>
         </div>
 
-        <div id="panel-corte" class="panel active">
-            <button class="btn-cam" onclick="document.getElementById('input-corte').click()">📸 TOMAR FOTO
-                (CORTE)</button>
-            <input type="file" id="input-corte" accept="image/*" capture="environment" multiple style="display:none">
-            <div id="preview-corte" class="preview-container"></div>
-            <textarea id="obs-corte" placeholder="Notas de corte..."></textarea>
-            <button id="btn-save-corte" class="submit-btn" onclick="enviarDatos('corte')">GUARDAR CORTE</button>
+        <div id="main-panel">
+            <button class="btn-cam" onclick="document.getElementById('input-file').click()">📸 TOMAR FOTOS EN
+                TERRENO</button>
+            <input type="file" id="input-file" accept="image/*" capture="environment" multiple style="display:none">
 
-            <div class="historial-section">
-                <h3>Historial Cortes</h3>
-                <div id="lista-corte"></div>
-            </div>
+            <div id="preview-area" class="preview-container"></div>
+            <textarea id="obs-text" placeholder="Observaciones técnicas..."></textarea>
+            <button id="btn-main-save" class="submit-btn" onclick="guardarRegistro()">GUARDAR TRABAJO</button>
         </div>
 
-        <div id="panel-reposicion" class="panel">
-            <button class="btn-cam" onclick="document.getElementById('input-repo').click()">📸 TOMAR FOTO
-                (REPO)</button>
-            <input type="file" id="input-repo" accept="image/*" capture="environment" multiple style="display:none">
-
-            <div id="preview-repo" class="preview-container">
-            </div>
-
-            <textarea id="obs-repo" placeholder="Notas de reposición..."></textarea>
-            <button id="btn-save-repo" class="submit-btn" onclick="enviarDatos('reposicion')">GUARDAR
-                REPOSICIÓN</button>
-
-            <div class="historial-section">
-                <h3>Historial Reposiciones</h3>
-                <div id="lista-reposicion"></div>
-            </div>
-        </div>
+        <h3 class="historial-title">Historial Registrado</h3>
+        <div id="historial-lista"></div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://mjxpqxyxkshtqlptccto.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qeHBxeHl4a3NodHFscHRjY3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MzQyOTAsImV4cCI6MjA5MjMxMDI5MH0.KGi6VT8g-zKeEi0NWHpkdzdKHP1mF11Ch0Q-46c2Wps';
         const API_URL = 'https://aquabit-op.onrender.com/api';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Almacenamos objetos { file: Binario, verificado: boolean }
-        let dataCorte = [];
-        let dataRepo = [];
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let currentTab = 'corte';
+        let archivosTemporales = [];
 
-        function cambiarTab(tipo) {
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        // 1. Manejo de Pestañas y Persistencia al Cargar
+        function cambiarPestaña(tipo) {
+            currentTab = tipo;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`panel-${tipo}`).classList.add('active');
-            document.getElementById(`tab-${tipo}-btn`).classList.add('active');
-            cargarHistorial(tipo);
+            document.getElementById(`btn-tab-${tipo === 'corte' ? 'corte' : 'repo'}`).classList.add('active');
+
+            // Limpiar formulario al cambiar
+            archivosTemporales = [];
+            document.getElementById('preview-area').innerHTML = '';
+            document.getElementById('obs-text').value = '';
+
+            cargarHistorialServidor();
         }
 
-        // Manejador de entrada de archivos mejorado
-        function configurarCaptura(inputId, dataArray, previewId, conCheckbox) {
-            document.getElementById(inputId).onchange = function (e) {
-                const files = Array.from(e.target.files);
-                const container = document.getElementById(previewId);
+        // 2. Vista previa antes de subir
+        document.getElementById('input-file').onchange = function (e) {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                archivosTemporales.push(file);
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const img = document.createElement('img');
+                    img.src = ev.target.result;
+                    img.style.width = "80px";
+                    document.getElementById('preview-area').appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        };
 
-                files.forEach((file, index) => {
-                    // Creamos una referencia única para este archivo
-                    const itemData = { file: file, verificado: false };
-                    dataArray.push(itemData);
-
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                        const div = document.createElement('div');
-                        div.className = 'preview-item';
-
-                        let html = `<img src="${ev.target.result}">`;
-
-                        if (conCheckbox) {
-                            html += `
-                                <label>VERIFICADO</label>
-                                <input type="checkbox" onchange="actualizarVerificacion('${previewId}', ${dataArray.indexOf(itemData)}, this.checked)">
-                            `;
-                        }
-
-                        div.innerHTML = html;
-                        container.appendChild(div);
-                    };
-                    reader.readAsDataURL(file);
-                });
-            };
-        }
-
-        function actualizarVerificacion(previewId, index, isChecked) {
-            if (previewId === 'preview-repo') {
-                dataRepo[index].verificado = isChecked;
-            }
-        }
-
-        configurarCaptura('input-corte', dataCorte, 'preview-corte', false);
-        configurarCaptura('input-repo', dataRepo, 'preview-repo', true);
-
-        async function enviarDatos(tipo) {
-            const btn = document.getElementById(tipo === 'corte' ? 'btn-save-corte' : 'btn-save-repo');
-            const dataList = tipo === 'corte' ? dataCorte : dataRepo;
-            let obs = document.getElementById(tipo === 'corte' ? 'obs-corte' : 'obs-repo').value;
-
-            if (dataList.length === 0) return alert("Captura fotos");
-
+        // 3. Guardar en Supabase + Render
+        async function guardarRegistro() {
+            if (archivosTemporales.length === 0) return alert("Captura fotos primero");
+            const btn = document.getElementById('btn-main-save');
             btn.disabled = true;
             btn.innerText = "SUBIENDO...";
 
             try {
                 const urls = [];
-                let contadorVerificadas = 0;
-
-                for (let item of dataList) {
-                    const name = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
-                    const { error } = await supabaseClient.storage.from('fotos-aquabit').upload(name, item.file);
+                for (let file of archivosTemporales) {
+                    const name = `task_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
+                    const { error } = await supabase.storage.from('fotos-aquabit').upload(name, file);
                     if (error) throw error;
-
-                    const { data: { publicUrl } } = supabaseClient.storage.from('fotos-aquabit').getPublicUrl(name);
+                    const { data: { publicUrl } } = supabase.storage.from('fotos-aquabit').getPublicUrl(name);
                     urls.push(publicUrl);
-
-                    if (item.verificado) contadorVerificadas++;
-                }
-
-                // Si hay imágenes marcadas, lo añadimos a la nota
-                if (contadorVerificadas > 0) {
-                    obs = `[${contadorVerificadas} FOTO(S) VERIFICADA(S)] ` + obs;
                 }
 
                 await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tipo, observaciones: obs, fotos: urls })
+                    body: JSON.stringify({
+                        tipo: currentTab,
+                        observaciones: document.getElementById('obs-text').value,
+                        fotos: urls
+                    })
                 });
 
-                alert("✅ Éxito");
-                location.reload();
+                alert("✅ Guardado en la nube");
+                cambiarPestaña(currentTab); // Recarga el historial
             } catch (err) {
                 alert("Error: " + err.message);
                 btn.disabled = false;
             }
         }
 
-        async function cargarHistorial(tipo) {
-            const cont = document.getElementById(tipo === 'corte' ? 'lista-corte' : 'lista-reposicion');
-            cont.innerHTML = '...';
+        // 4. Cargar Historial desde la Base de Datos (Persistencia Real)
+        async function cargarHistorialServidor() {
+            const lista = document.getElementById('historial-lista');
+            lista.innerHTML = '<p>Consultando base de datos...</p>';
+
             try {
-                const res = await fetch(`${API_URL}/registros/${tipo}`);
-                const datos = await res.json();
-                cont.innerHTML = '';
-                datos.forEach(reg => {
-                    const div = document.createElement('div');
-                    div.className = 'registro-card';
-                    div.innerHTML = `
-                        <div class="fotos-grid">${reg.fotos.map(u => `<img src="${u}">`).join('')}</div>
+                const res = await fetch(`${API_URL}/registros/${currentTab}`);
+                const registros = await res.json();
+                lista.innerHTML = '';
+
+                registros.forEach(reg => {
+                    const card = document.createElement('div');
+                    card.className = 'registro-card';
+
+                    // Lógica del botón "Repuesto" permanente
+                    const statusHtml = currentTab === 'reposicion'
+                        ? `<span class="status-badge status-repuesto">✔️ REPUESTO</span>`
+                        : '';
+
+                    card.innerHTML = `
+                        ${statusHtml}
+                        <div class="fotos-grid">
+                            ${reg.fotos.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('')}
+                        </div>
                         <p><small>${new Date(reg.createdAt).toLocaleString()}</small></p>
                         <p>${reg.observaciones || ''}</p>
-                        <button class="btn-delete" onclick="eliminarReg(${reg.id}, '${tipo}')">ELIMINAR</button>
+                        <button class="btn-delete" onclick="eliminarRegistro(${reg.id})">🗑️ ELIMINAR</button>
                     `;
-                    cont.appendChild(div);
+                    lista.appendChild(card);
                 });
-            } catch (e) { }
-        }
-
-        async function eliminarReg(id, tipo) {
-            if (confirm('¿Eliminar?')) {
-                await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
-                cargarHistorial(tipo);
+            } catch (e) {
+                lista.innerHTML = '<p>Error al conectar con Render.</p>';
             }
         }
 
-        window.onload = () => cargarHistorial('corte');
+        async function eliminarRegistro(id) {
+            if (!confirm('¿Eliminar registro permanentemente?')) return;
+            await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
+            cargarHistorialServidor();
+        }
+
+        // Inicio
+        window.onload = () => cargarHistorialServidor();
     </script>
 </body>
 
