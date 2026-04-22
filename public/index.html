@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AquaBit OP - Gestión de Terreno</title>
+    <title>AquaBit OP - Sistema de Terreno</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -75,18 +75,28 @@
             display: flex;
             gap: 10px;
             overflow-x: auto;
-            margin-bottom: 15px;
+            margin: 10px 0;
             padding: 10px;
+            min-height: 110px;
             border: 2px dashed #ccc;
             border-radius: 8px;
             background: #fafafa;
         }
 
+        .preview-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
         .preview-item img {
-            width: 80px;
-            height: 80px;
+            width: 90px;
+            height: 90px;
             object-fit: cover;
-            border-radius: 6px;
+            border-radius: 8px;
+            border: 2px solid var(--primary);
         }
 
         textarea {
@@ -95,7 +105,7 @@
             border: 1px solid #ccc;
             border-radius: 8px;
             box-sizing: border-box;
-            margin-bottom: 10px;
+            margin-top: 10px;
         }
 
         .submit-btn {
@@ -105,16 +115,16 @@
             color: white;
             border: none;
             border-radius: 8px;
-            font-weight: bold;
+            font-size: 16px;
             cursor: pointer;
+            font-weight: bold;
         }
 
-        /* Estilos Historial Permanente */
-        .historial-title {
+        /* Historial Permanente */
+        .historial-section {
             margin-top: 30px;
             border-top: 2px solid #eee;
-            padding-top: 15px;
-            color: #374151;
+            padding-top: 20px;
         }
 
         .registro-card {
@@ -123,37 +133,32 @@
             padding: 15px;
             border-radius: 12px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .fotos-grid {
             display: flex;
             gap: 8px;
             overflow-x: auto;
-            margin-bottom: 10px;
+            padding-bottom: 10px;
         }
 
         .fotos-grid img {
             width: 100px;
             height: 100px;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: 6px;
             border: 1px solid #ddd;
-            cursor: pointer;
         }
 
-        .status-badge {
+        .status-repuesto {
             display: inline-block;
+            background: #dcfce7;
+            color: #166534;
             padding: 4px 10px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: bold;
             margin-bottom: 10px;
-        }
-
-        .status-repuesto {
-            background: #dcfce7;
-            color: #166534;
             border: 1px solid #bbf7d0;
         }
 
@@ -162,7 +167,7 @@
             background: none;
             border: 1px solid var(--danger);
             padding: 5px 10px;
-            border-radius: 6px;
+            border-radius: 5px;
             cursor: pointer;
             font-size: 11px;
             margin-top: 10px;
@@ -176,141 +181,131 @@
         <h2>🌊 AquaBit OP</h2>
 
         <div class="tabs">
-            <button id="btn-tab-corte" class="tab-btn active" onclick="cambiarPestaña('corte')">CORTES</button>
-            <button id="btn-tab-repo" class="tab-btn" onclick="cambiarPestaña('reposicion')">REPOSICIÓN</button>
+            <button id="tab-corte-btn" class="tab-btn active" onclick="cambiarTab('corte')">CORTES</button>
+            <button id="tab-repo-btn" class="tab-btn" onclick="cambiarTab('reposicion')">REPOSICIÓN</button>
         </div>
 
-        <div id="main-panel">
-            <button class="btn-cam" onclick="document.getElementById('input-file').click()">📸 TOMAR FOTOS EN
-                TERRENO</button>
+        <div id="panel-principal">
+            <button class="btn-cam" onclick="document.getElementById('input-file').click()">📸 TOMAR FOTOS</button>
             <input type="file" id="input-file" accept="image/*" capture="environment" multiple style="display:none">
 
             <div id="preview-area" class="preview-container"></div>
-            <textarea id="obs-text" placeholder="Observaciones técnicas..."></textarea>
-            <button id="btn-main-save" class="submit-btn" onclick="guardarRegistro()">GUARDAR TRABAJO</button>
+            <textarea id="obs-area" placeholder="Notas de terreno..."></textarea>
+            <button id="btn-save" class="submit-btn" onclick="ejecutarGuardado()">GUARDAR REGISTRO</button>
         </div>
 
-        <h3 class="historial-title">Historial Registrado</h3>
-        <div id="historial-lista"></div>
+        <div class="historial-section">
+            <h3 id="titulo-historial">Historial de Cortes</h3>
+            <div id="lista-historial"></div>
+        </div>
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://mjxpqxyxkshtqlptccto.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qeHBxeHl4a3NodHFscHRjY3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MzQyOTAsImV4cCI6MjA5MjMxMDI5MH0.KGi6VT8g-zKeEi0NWHpkdzdKHP1mF11Ch0Q-46c2Wps';
-        const API_URL = 'https://aquabit-op.onrender.com/api';
+        // SOLUCIÓN AL ERROR DE CONSOLA: Solo una declaración de supabase
+        const S_URL = 'https://mjxpqxyxkshtqlptccto.supabase.co';
+        const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qeHBxeHl4a3NodHFscHRjY3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MzQyOTAsImV4cCI6MjA5MjMxMDI5MH0.KGi6VT8g-zKeEi0NWHpkdzdKHP1mF11Ch0Q-46c2Wps';
+        const API = 'https://aquabit-op.onrender.com/api';
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Usamos un nombre único para evitar conflictos con el SDK
+        const clientSupabase = supabase.createClient(S_URL, S_KEY);
+
         let currentTab = 'corte';
-        let archivosTemporales = [];
+        let fotosTemporales = [];
 
-        // 1. Manejo de Pestañas y Persistencia al Cargar
-        function cambiarPestaña(tipo) {
+        function cambiarTab(tipo) {
             currentTab = tipo;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`btn-tab-${tipo === 'corte' ? 'corte' : 'repo'}`).classList.add('active');
+            document.getElementById(`tab-${tipo}-btn`).classList.add('active');
+            document.getElementById('titulo-historial').innerText = `Historial de ${tipo === 'corte' ? 'Cortes' : 'Reposiciones'}`;
 
-            // Limpiar formulario al cambiar
-            archivosTemporales = [];
+            // Reset formulario
+            fotosTemporales = [];
             document.getElementById('preview-area').innerHTML = '';
-            document.getElementById('obs-text').value = '';
+            document.getElementById('obs-area').value = '';
 
-            cargarHistorialServidor();
+            cargarHistorial();
         }
 
-        // 2. Vista previa antes de subir
         document.getElementById('input-file').onchange = function (e) {
             const files = Array.from(e.target.files);
             files.forEach(file => {
-                archivosTemporales.push(file);
+                fotosTemporales.push(file);
                 const reader = new FileReader();
                 reader.onload = (ev) => {
-                    const img = document.createElement('img');
-                    img.src = ev.target.result;
-                    img.style.width = "80px";
-                    document.getElementById('preview-area').appendChild(img);
+                    const div = document.createElement('div');
+                    div.className = 'preview-item';
+                    div.innerHTML = `<img src="${ev.target.result}">`;
+                    document.getElementById('preview-area').appendChild(div);
                 };
                 reader.readAsDataURL(file);
             });
         };
 
-        // 3. Guardar en Supabase + Render
-        async function guardarRegistro() {
-            if (archivosTemporales.length === 0) return alert("Captura fotos primero");
-            const btn = document.getElementById('btn-main-save');
+        async function ejecutarGuardado() {
+            if (fotosTemporales.length === 0) return alert("Faltan fotos");
+            const btn = document.getElementById('btn-save');
             btn.disabled = true;
             btn.innerText = "SUBIENDO...";
 
             try {
                 const urls = [];
-                for (let file of archivosTemporales) {
-                    const name = `task_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
-                    const { error } = await supabase.storage.from('fotos-aquabit').upload(name, file);
+                for (let file of fotosTemporales) {
+                    const name = `img_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
+                    const { error } = await clientSupabase.storage.from('fotos-aquabit').upload(name, file);
                     if (error) throw error;
-                    const { data: { publicUrl } } = supabase.storage.from('fotos-aquabit').getPublicUrl(name);
+                    const { data: { publicUrl } } = clientSupabase.storage.from('fotos-aquabit').getPublicUrl(name);
                     urls.push(publicUrl);
                 }
 
-                await fetch(`${API_URL}/upload`, {
+                await fetch(`${API}/upload`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         tipo: currentTab,
-                        observaciones: document.getElementById('obs-text').value,
+                        observaciones: document.getElementById('obs-area').value,
                         fotos: urls
                     })
                 });
 
-                alert("✅ Guardado en la nube");
-                cambiarPestaña(currentTab); // Recarga el historial
+                alert("✅ Guardado correctamente");
+                cambiarTab(currentTab);
             } catch (err) {
                 alert("Error: " + err.message);
                 btn.disabled = false;
             }
         }
 
-        // 4. Cargar Historial desde la Base de Datos (Persistencia Real)
-        async function cargarHistorialServidor() {
-            const lista = document.getElementById('historial-lista');
-            lista.innerHTML = '<p>Consultando base de datos...</p>';
-
+        async function cargarHistorial() {
+            const lista = document.getElementById('lista-historial');
+            lista.innerHTML = '<p>Cargando...</p>';
             try {
-                const res = await fetch(`${API_URL}/registros/${currentTab}`);
-                const registros = await res.json();
+                const res = await fetch(`${API}/registros/${currentTab}`);
+                const datos = await res.json();
                 lista.innerHTML = '';
-
-                registros.forEach(reg => {
+                datos.forEach(reg => {
                     const card = document.createElement('div');
                     card.className = 'registro-card';
-
-                    // Lógica del botón "Repuesto" permanente
-                    const statusHtml = currentTab === 'reposicion'
-                        ? `<span class="status-badge status-repuesto">✔️ REPUESTO</span>`
-                        : '';
-
+                    const badge = currentTab === 'reposicion' ? '<span class="status-repuesto">✔️ REPUESTO</span>' : '';
                     card.innerHTML = `
-                        ${statusHtml}
-                        <div class="fotos-grid">
-                            ${reg.fotos.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('')}
-                        </div>
+                        ${badge}
+                        <div class="fotos-grid">${reg.fotos.map(u => `<img src="${u}" onclick="window.open('${u}')">`).join('')}</div>
                         <p><small>${new Date(reg.createdAt).toLocaleString()}</small></p>
                         <p>${reg.observaciones || ''}</p>
-                        <button class="btn-delete" onclick="eliminarRegistro(${reg.id})">🗑️ ELIMINAR</button>
+                        <button class="btn-delete" onclick="eliminarReg(${reg.id})">ELIMINAR</button>
                     `;
                     lista.appendChild(card);
                 });
-            } catch (e) {
-                lista.innerHTML = '<p>Error al conectar con Render.</p>';
+            } catch (e) { lista.innerHTML = 'Error de conexión.'; }
+        }
+
+        async function eliminarReg(id) {
+            if (confirm('¿Eliminar?')) {
+                await fetch(`${API}/registros/${id}`, { method: 'DELETE' });
+                cargarHistorial();
             }
         }
 
-        async function eliminarRegistro(id) {
-            if (!confirm('¿Eliminar registro permanentemente?')) return;
-            await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
-            cargarHistorialServidor();
-        }
-
-        // Inicio
-        window.onload = () => cargarHistorialServidor();
+        window.onload = cargarHistorial;
     </script>
 </body>
 
