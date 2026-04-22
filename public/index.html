@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AquaBit OP - Sistema de Terreno</title>
+    <title>AquaBit OP - Gestión v2.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -28,12 +28,6 @@
         .btn-transition {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        @media (min-width: 768px) {
-            .main-container {
-                max-width: 800px;
-            }
-        }
     </style>
 </head>
 
@@ -46,8 +40,8 @@
                     class="font-extrabold text-2xl tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
                     AQUABIT <span class="font-light text-white">OP</span>
                 </h1>
-                <p class="text-[9px] text-blue-400/80 tracking-[0.2em] font-bold uppercase text-left">Gestión de
-                    Suministros v2.5</p>
+                <p class="text-[9px] text-blue-400/80 tracking-[0.2em] font-bold uppercase">Gestión de Suministros v2.5
+                </p>
             </div>
             <div class="flex items-center gap-2 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
                 <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
@@ -56,7 +50,7 @@
         </div>
     </header>
 
-    <main class="main-container mx-auto px-4 pb-24">
+    <main class="max-w-4xl mx-auto px-4 pb-24">
         <div class="flex gap-2 mb-8 bg-black/40 p-1.5 rounded-2xl border border-white/5">
             <button onclick="setTipo('corte')" id="btn-corte"
                 class="btn-transition flex-1 py-3 rounded-xl font-bold text-sm tracking-wide uppercase">Orden de
@@ -68,8 +62,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <section>
                 <div class="glass p-6 rounded-[2.5rem] shadow-2xl border border-white/10 sticky top-24">
-                    <h3
-                        class="text-sm font-bold text-gray-400 mb-4 flex items-center gap-2 uppercase tracking-widest text-left">
+                    <h3 class="text-sm font-bold text-gray-400 mb-4 flex items-center gap-2 uppercase tracking-widest">
                         <span class="w-1 h-4 bg-blue-500 rounded-full"></span> Nuevo Registro
                     </h3>
 
@@ -79,14 +72,15 @@
                     <button onclick="document.getElementById('fotoInput').click()"
                         class="group w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 p-6 rounded-3xl mb-4 font-bold flex flex-col items-center justify-center gap-2 btn-transition shadow-lg border border-white/10">
                         <span class="text-3xl">📸</span>
-                        <span id="txtBtnCamara" class="text-xs uppercase tracking-widest">Capturar Evidencia</span>
+                        <span id="txtBtnCamara" class="text-xs uppercase tracking-widest text-center">Tomar Fotos (Mín.
+                            3)</span>
                     </button>
 
-                    <div id="listaFotos" class="flex gap-3 overflow-x-auto mb-6 scrollbar-hide py-2"></div>
+                    <div id="listaFotos" class="flex gap-3 overflow-x-auto mb-6 scrollbar-hide py-2 min-h-[90px]"></div>
 
-                    <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase text-left">Observaciones
-                        de Campo</label>
-                    <textarea id="obs" placeholder="Ej: Medidor con sello roto, difícil acceso..."
+                    <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Observaciones de
+                        Campo</label>
+                    <textarea id="obs" placeholder="Ej: Medidor con sello roto..."
                         class="w-full p-4 bg-black/30 border border-white/5 rounded-2xl mb-6 h-32 text-white text-sm outline-none focus:border-blue-500/50 transition-all placeholder:text-gray-700"></textarea>
 
                     <button id="btnEnviar" onclick="enviarRegistro()"
@@ -114,14 +108,14 @@
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let tipoActual = 'corte';
-        let fotosParaSubir = []; // Aquí guardaremos los objetos FILE reales
+        let fotosParaSubir = [];
 
         function setTipo(t) {
             tipoActual = t;
             fotosParaSubir = [];
             document.getElementById('listaFotos').innerHTML = '';
             document.getElementById('obs').value = '';
-            document.getElementById('labelTipo').innerText = t === 'corte' ? 'CORTE' : 'REPOSICIÓN';
+            document.getElementById('labelTipo').innerText = t.toUpperCase();
             document.getElementById('txtBtnCamara').innerText = t === 'corte' ? 'Tomar Fotos (Mín. 3)' : 'Tomar Foto (Mín. 1)';
 
             const isCorte = t === 'corte';
@@ -133,21 +127,30 @@
 
         function procesarFoto() {
             const input = document.getElementById('fotoInput');
+            const lista = document.getElementById('listaFotos');
+
             if (input.files && input.files) {
                 const file = input.files;
-
-                // CRÍTICO: Guardamos el archivo binario real para la subida
                 fotosParaSubir.push(file);
 
                 const wrapper = document.createElement('div');
                 wrapper.className = "relative flex-shrink-0";
-                const img = document.createElement('img');
-                img.src = URL.createObjectURL(file); // Solo para previsualización local
-                img.className = "h-20 w-20 object-cover rounded-2xl border-2 border-blue-500/50 shadow-md";
-                wrapper.appendChild(img);
-                document.getElementById('listaFotos').appendChild(wrapper);
 
-                // Limpiamos el input para permitir capturas consecutivas
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.className = "h-20 w-20 object-cover rounded-2xl border-2 border-blue-500/50 shadow-md";
+
+                const btnBorrar = document.createElement('button');
+                btnBorrar.innerHTML = "✕";
+                btnBorrar.className = "absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 text-[10px] font-bold border border-white/20 shadow-lg";
+                btnBorrar.onclick = () => {
+                    wrapper.remove();
+                    fotosParaSubir = fotosParaSubir.filter(f => f !== file);
+                };
+
+                wrapper.appendChild(img);
+                wrapper.appendChild(btnBorrar);
+                lista.appendChild(wrapper);
                 input.value = "";
             }
         }
@@ -158,59 +161,50 @@
                 const res = await fetch(`${API_URL}/registros/${tipoActual}`);
                 const data = await res.json();
                 document.getElementById('countLabel').innerText = `${data.length} REGISTROS`;
-                listado.innerHTML = data.length === 0 ? '<div class="glass p-10 rounded-3xl text-center text-gray-600 text-xs font-bold tracking-widest uppercase italic">Bandeja de entrada vacía</div>' : '';
+                listado.innerHTML = data.length === 0 ? '<div class="glass p-10 rounded-3xl text-center text-gray-600 text-xs font-bold uppercase italic">Sin registros previos</div>' : '';
 
                 data.forEach(reg => {
                     const card = document.createElement('div');
                     card.className = 'glass p-5 rounded-[2rem] border-l-4 ' + (tipoActual === 'corte' ? 'border-blue-500' : 'border-emerald-500') + ' shadow-lg mb-4';
-
                     card.innerHTML = `
                         <div class="flex justify-between items-center mb-4">
-                            <span class="text-[9px] text-gray-500 font-black uppercase tracking-tighter bg-black/30 px-2 py-1 rounded-md italic">
+                            <span class="text-[9px] text-gray-500 font-black uppercase bg-black/30 px-2 py-1 rounded-md italic">
                                 ${new Date(reg.createdAt).toLocaleString()}
                             </span>
-                            <button onclick="eliminarRegistro(${reg.id})" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-xl text-[9px] font-black border border-red-500/20 transition-all uppercase tracking-widest">Eliminar</button>
+                            <button onclick="eliminarRegistro(${reg.id})" class="text-red-500 text-[9px] font-black uppercase tracking-widest hover:text-red-400">Eliminar</button>
                         </div>
-                        <p class="text-gray-300 text-sm mb-4 leading-relaxed font-medium italic text-left">"${reg.observaciones || 'Sin notas.'}"</p>
+                        <p class="text-gray-300 text-sm mb-4 leading-relaxed italic">"${reg.observaciones || 'Sin notas.'}"</p>
                         <div class="flex gap-2 overflow-x-auto scrollbar-hide py-1">
-                            ${reg.fotos.map(url => `<img src="${url}" onerror="this.src='https://via.placeholder.com/150?text=Error'" class="h-20 w-20 object-cover rounded-xl border border-white/5">`).join('')}
-                        </div>
-                    `;
+                            ${reg.fotos.map(url => `<img src="${url}" class="h-20 w-20 object-cover rounded-xl border border-white/5">`).join('')}
+                        </div>`;
                     listado.appendChild(card);
                 });
-            } catch (err) {
-                listado.innerHTML = '<div class="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl text-red-500 text-center text-xs font-bold uppercase italic">Error de sincronización con el servidor</div>';
-            }
+            } catch (err) { console.error(err); }
         }
 
-
         async function enviarRegistro() {
-            if (fotosParaSubir.length === 0) return alert("Captura evidencia visual.");
+            if (fotosParaSubir.length === 0) return alert("Falta evidencia visual.");
             if (tipoActual === 'corte' && fotosParaSubir.length < 3) return alert("Protocolo de Corte requiere 3 fotos.");
 
             const btn = document.getElementById('btnEnviar');
             btn.disabled = true;
-            btn.innerText = "⚡ SUBIENDO...";
+            btn.innerText = "⚡ SUBIENDO BINARIOS...";
 
             try {
                 const urlsFinales = [];
                 for (let file of fotosParaSubir) {
-                    // 1. Generamos nombre con extensión .jpg
                     const fileName = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 4)}.jpg`;
 
-                    // 2. Subida forzando el contentType a image/jpeg (estándar para .jpg)
-                    // Usamos el archivo binario directo para evitar pérdida de datos
+                    // SUBIDA BLINDADA: Enviamos el binario real
                     const { data, error } = await supabaseClient.storage
                         .from('fotos-aquabit')
                         .upload(fileName, file, {
-                            cacheControl: '3600',
-                            upsert: false,
-                            contentType: 'image/jpeg' // MIME tipo estándar para .jpg y .jpeg
+                            contentType: 'image/jpeg',
+                            upsert: false
                         });
 
-                    if (error) throw new Error("Error en Storage: " + error.message);
+                    if (error) throw new Error("Supabase Storage: " + error.message);
 
-                    // 3. Obtención de la URL pública
                     const { data: { publicUrl } } = supabaseClient.storage
                         .from('fotos-aquabit')
                         .getPublicUrl(fileName);
@@ -218,7 +212,7 @@
                     urlsFinales.push(publicUrl);
                 }
 
-                btn.innerText = "💾 REGISTRANDO...";
+                btn.innerText = "💾 SINCRONIZANDO...";
                 const res = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -230,10 +224,8 @@
                 });
 
                 if (res.ok) {
-                    alert("✅ Registro sincronizado con éxito");
+                    alert("✅ Registro exitoso.");
                     location.reload();
-                } else {
-                    throw new Error("El servidor de Render no respondió.");
                 }
             } catch (err) {
                 alert("ERROR: " + err.message);
@@ -243,14 +235,11 @@
         }
 
         async function eliminarRegistro(id) {
-            if (!confirm('¿Eliminar registro permanentemente?')) return;
-            try {
-                const res = await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
-                if (res.ok) cargarHistorial();
-            } catch (e) { alert("Error al conectar con el servidor."); }
+            if (!confirm('¿Eliminar registro?')) return;
+            await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
+            cargarHistorial();
         }
 
-        // Inicialización
         setTipo('corte');
     </script>
 </body>
