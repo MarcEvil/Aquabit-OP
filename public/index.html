@@ -29,6 +29,7 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
+        /* Pestañas */
         .tabs {
             display: flex;
             gap: 10px;
@@ -43,6 +44,7 @@
             cursor: pointer;
             background: #e5e7eb;
             font-weight: bold;
+            transition: 0.3s;
         }
 
         .tab-btn.active {
@@ -58,6 +60,7 @@
             display: block;
         }
 
+        /* Botón Cámara */
         .btn-cam {
             background: var(--success);
             color: white;
@@ -71,21 +74,17 @@
             font-size: 16px;
         }
 
-        /* Contenedor de Vista Previa */
+        /* Contenedor de Vista Previa (El cuadrado inferior) */
         .preview-container {
             display: flex;
             gap: 10px;
             overflow-x: auto;
             margin-top: 10px;
-            padding: 5px;
-            min-height: 100px;
-            border: 1px dashed #ccc;
+            padding: 10px;
+            min-height: 110px;
+            border: 2px dashed #ccc;
             border-radius: 8px;
-        }
-
-        .preview-item {
-            position: relative;
-            flex-shrink: 0;
+            background: #fafafa;
         }
 
         .preview-item img {
@@ -98,11 +97,30 @@
 
         textarea {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #ccc;
             border-radius: 8px;
             box-sizing: border-box;
             margin-top: 10px;
+            font-size: 14px;
+            resize: none;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            background: #f0fdf4;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #bbf7d0;
+        }
+
+        .checkbox-group input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
         }
 
         .submit-btn {
@@ -120,129 +138,161 @@
 
         .submit-btn:disabled {
             background: #94a3b8;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 15px 0;
-            background: #f0fdf4;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #bbf7d0;
+            cursor: not-allowed;
         }
     </style>
 </head>
 
 <body>
+
     <div class="container">
         <h2>🌊 AquaBit OP</h2>
+
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('corte')">CORTES</button>
-            <button class="tab-btn" onclick="switchTab('reposicion')">REPOSICIÓN</button>
+            <button id="tab-corte-btn" class="tab-btn active" onclick="cambiarTab('corte')">CORTES</button>
+            <button id="tab-repo-btn" class="tab-btn" onclick="cambiarTab('reposicion')">REPOSICIÓN</button>
         </div>
 
         <div id="panel-corte" class="panel active">
             <button type="button" class="btn-cam" onclick="document.getElementById('input-corte').click()">📸 TOMAR FOTO
                 (CORTE)</button>
             <input type="file" id="input-corte" accept="image/*" capture="environment" multiple style="display:none">
-            <div id="preview-corte" class="preview-container"></div>
-            <textarea id="obs-corte" placeholder="Observaciones de corte..."></textarea>
-            <button id="btn-save-corte" class="submit-btn" onclick="enviar('corte')">GUARDAR CORTE</button>
+
+            <div id="preview-corte" class="preview-container">
+            </div>
+
+            <textarea id="obs-corte" rows="3" placeholder="Observaciones de terreno..."></textarea>
+            <button id="btn-save-corte" class="submit-btn" onclick="enviarDatos('corte')">GUARDAR CORTE</button>
         </div>
 
         <div id="panel-reposicion" class="panel">
             <button type="button" class="btn-cam" onclick="document.getElementById('input-repo').click()">📸 TOMAR FOTO
                 (REPO)</button>
             <input type="file" id="input-repo" accept="image/*" capture="environment" multiple style="display:none">
+
             <div id="preview-repo" class="preview-container"></div>
+
             <div class="checkbox-group">
-                <input type="checkbox" id="check-repo"> <label for="check-repo">Servicio verificado</label>
+                <input type="checkbox" id="check-repo">
+                <label for="check-repo"><strong>Servicio verificado en terreno</strong></label>
             </div>
-            <textarea id="obs-repo" placeholder="Observaciones de reposición..."></textarea>
-            <button id="btn-save-repo" class="submit-btn" onclick="enviar('reposicion')">GUARDAR REPOSICIÓN</button>
+
+            <textarea id="obs-repo" rows="3" placeholder="Detalles de la reposición..."></textarea>
+            <button id="btn-save-repo" class="submit-btn" onclick="enviarDatos('reposicion')">GUARDAR
+                REPOSICIÓN</button>
         </div>
     </div>
 
     <script>
+        // Configuración de conexiones
         const SUPABASE_URL = 'https://mjxpqxyxkshtqlptccto.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qeHBxeHl4a3NodHFscHRjY3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MzQyOTAsImV4cCI6MjA5MjMxMDI5MH0.KGi6VT8g-zKeEi0NWHpkdzdKHP1mF11Ch0Q-46c2Wps';
         const API_URL = 'https://aquabit-op.onrender.com/api';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let storageCorte = [];
-        let storageRepo = [];
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        // Arreglos para guardar los archivos binarios reales
+        let fotosCorte = [];
+        let fotosRepo = [];
+
+        // 1. Lógica de Pestañas
+        function cambiarTab(tipo) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById(`panel-${tab}`).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+            document.getElementById(`panel-${tipo}`).classList.add('active');
+            document.getElementById(`tab-${tipo}-btn`).classList.add('active');
         }
 
-        // --- LÓGICA DE VISTA PREVIA (REPARADA) ---
-        function setupPreview(inputId, storageArray, previewId) {
-            document.getElementById(inputId).addEventListener('change', function (e) {
-                const files = Array.from(e.target.files);
-                const container = document.getElementById(previewId);
+        // 2. Función de Vista Previa Inmediata (Corrección Técnica)
+        function configurarVistaPrevia(inputId, storageArray, previewId) {
+            const input = document.getElementById(inputId);
+            const container = document.getElementById(previewId);
 
-                files.forEach(file => {
-                    storageArray.push(file); // Guardamos el binario real
+            input.onchange = function (e) {
+                const selectedFiles = Array.from(e.target.files);
+
+                selectedFiles.forEach(file => {
+                    storageArray.push(file); // Mantenemos el archivo en memoria
+
                     const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const div = document.createElement('div');
-                        div.className = 'preview-item';
-                        div.innerHTML = `<img src="${event.target.result}">`;
-                        container.appendChild(div);
+                    reader.onload = function (event) {
+                        const imgDiv = document.createElement('div');
+                        imgDiv.className = 'preview-item';
+                        imgDiv.innerHTML = `<img src="${event.target.result}">`;
+                        container.appendChild(imgDiv);
                     };
-                    reader.readAsDataURL(file);
+                    reader.readAsDataURL(file); // Genera la miniatura local
                 });
-            });
+            };
         }
 
-        setupPreview('input-corte', storageCorte, 'preview-corte');
-        setupPreview('input-repo', storageRepo, 'preview-repo');
+        // Inicializamos la escucha de fotos
+        configurarVistaPrevia('input-corte', fotosCorte, 'preview-corte');
+        configurarVistaPrevia('input-repo', fotosRepo, 'preview-repo');
 
-        async function enviar(tipo) {
-            const files = tipo === 'corte' ? storageCorte : storageRepo;
+        // 3. Envío final a Supabase y Render
+        async function enviarDatos(tipo) {
             const btn = document.getElementById(tipo === 'corte' ? 'btn-save-corte' : 'btn-save-repo');
-            const obs = document.getElementById(tipo === 'corte' ? 'obs-corte' : 'obs-repo').value;
-            const check = tipo === 'reposicion' ? document.getElementById('check-repo').checked : false;
+            const files = tipo === 'corte' ? fotosCorte : fotosRepo;
+            const obsText = document.getElementById(tipo === 'corte' ? 'obs-corte' : 'obs-repo').value;
+            const isChecked = tipo === 'reposicion' ? document.getElementById('check-repo').checked : false;
 
-            if (files.length === 0) return alert("Faltan fotos");
+            if (files.length === 0) {
+                return alert("⚠️ Debes capturar al menos una foto.");
+            }
 
             btn.disabled = true;
-            btn.innerText = "SUBIENDO...";
+            btn.innerText = "🚀 SUBIENDO IMÁGENES...";
 
             try {
-                const urls = [];
+                const urlsFinales = [];
+
+                // Subimos cada archivo al Bucket de Supabase
                 for (let file of files) {
-                    const name = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
-                    const { data, error } = await supabase.storage.from('fotos-aquabit').upload(name, file);
+                    const nombreUnico = `terreno_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
+
+                    const { data, error } = await supabaseClient.storage
+                        .from('fotos-aquabit')
+                        .upload(nombreUnico, file);
+
                     if (error) throw error;
-                    const { data: { publicUrl } } = supabase.storage.from('fotos-aquabit').getPublicUrl(name);
-                    urls.push(publicUrl);
+
+                    const { data: { publicUrl } } = supabaseClient.storage
+                        .from('fotos-aquabit')
+                        .getPublicUrl(nombreUnico);
+
+                    urlsFinales.push(publicUrl);
                 }
 
-                await fetch(`${API_URL}/upload`, {
+                btn.innerText = "💾 GUARDANDO EN BASE DE DATOS...";
+
+                // Enviamos las URLs al backend de Render
+                const res = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        tipo,
-                        observaciones: check ? "[VERIFICADO] " + obs : obs,
-                        fotos: urls
+                        tipo: tipo,
+                        observaciones: isChecked ? "[VERIFICADO] " + obsText : obsText,
+                        fotos: urlsFinales
                     })
                 });
 
-                alert("✅ Guardado correctamente");
-                location.reload();
+                if (res.ok) {
+                    alert("✅ Guardado con éxito.");
+                    location.reload(); // Recarga para limpiar memoria del móvil
+                } else {
+                    throw new Error("Fallo en la comunicación con Render.");
+                }
+
             } catch (err) {
-                alert("Error: " + err.message);
+                alert("❌ ERROR: " + err.message);
                 btn.disabled = false;
+                btn.innerText = "REINTENTAR GUARDAR";
             }
         }
     </script>
+
 </body>
 
 </html>
