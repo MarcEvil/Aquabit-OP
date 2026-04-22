@@ -6,12 +6,13 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Middleware para manejo de datos y CORS
+// Middleware
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '50mb' })); // Aumentamos el límite para recibir múltiples URLs
 app.use(express.static('public'));
 
-// 1. Conexión a la Base de Datos (PostgreSQL en Render)
+// 1. Conexión a PostgreSQL (Render)
+// Asegúrate de tener la variable DATABASE_URL configurada en el Dashboard de Render
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
     logging: false,
@@ -24,7 +25,7 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
 });
 
 // 2. Modelo de Datos "Registro"
-// Incluimos campos para persistencia de fotos y estados
+// Estructura optimizada para guardar objetos de fotos {url, verificado}
 const Registro = sequelize.define('Registro', {
     tipo: {
         type: DataTypes.STRING, // 'corte' o 'reposicion'
@@ -35,33 +36,33 @@ const Registro = sequelize.define('Registro', {
         allowNull: true
     },
     fotos: {
-        type: DataTypes.JSON, // Guarda el array de URLs de Supabase
+        type: DataTypes.JSON, // Almacena el array de objetos: [{url, verificado}, ...]
         allowNull: false,
         defaultValue: []
     }
 }, {
     tableName: 'Registros',
-    timestamps: true // Crea automáticamente createdAt y updatedAt
+    timestamps: true // Esto genera createdAt automáticamente
 });
 
 // 3. Endpoints de la API
 
-// Obtener registros por tipo (Persistencia de historial)
+// GET: Obtener historial persistente por tipo
 app.get('/api/registros/:tipo', async (req, res) => {
     try {
         const { tipo } = req.params;
         const registros = await Registro.findAll({
             where: { tipo },
-            order: [['createdAt', 'DESC']] // Los más recientes arriba
+            order: [['createdAt', 'DESC']] // Los más recientes primero
         });
         res.json(registros);
     } catch (error) {
         console.error('Error al obtener registros:', error);
-        res.status(500).json({ error: 'Error al consultar PostgreSQL' });
+        res.status(500).json({ error: 'Error en la base de datos' });
     }
 });
 
-// Guardar nuevo registro (Desde el botón Guardar Trabajo)
+// POST: Guardar nuevo registro desde terreno
 app.post('/api/upload', async (req, res) => {
     try {
         const { tipo, observaciones, fotos } = req.body;
@@ -69,7 +70,7 @@ app.post('/api/upload', async (req, res) => {
         const nuevoRegistro = await Registro.create({
             tipo,
             observaciones,
-            fotos // Almacena las URLs reales de Supabase
+            fotos // Recibe el array con los estados de los checkboxes
         });
 
         res.status(201).json({
@@ -78,11 +79,11 @@ app.post('/api/upload', async (req, res) => {
         });
     } catch (error) {
         console.error('Error al guardar:', error);
-        res.status(500).json({ error: 'Error al guardar en base de datos' });
+        res.status(500).json({ error: 'No se pudo guardar el registro' });
     }
 });
 
-// Eliminar registro del historial
+// DELETE: Eliminar registro (Botón de basurero en el historial)
 app.delete('/api/registros/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -91,29 +92,31 @@ app.delete('/api/registros/:id', async (req, res) => {
         if (borrado) {
             res.json({ success: true, message: 'Registro eliminado' });
         } else {
-            res.status(404).json({ error: 'No se encontró el registro' });
+            res.status(404).json({ error: 'Registro no encontrado' });
         }
     } catch (error) {
-        res.status(500).json({ error: 'Error al eliminar' });
+        console.error('Error al eliminar:', error);
+        res.status(500).json({ error: 'Error al intentar eliminar' });
     }
 });
 
-// 4. Inicialización con sincronización
-async function bootstrap() {
+// 4. Inicialización del Sistema
+async function iniciarApp() {
     try {
+        // Verificar conexión
         await sequelize.authenticate();
-        console.log('✅ Conexión a Base de Datos OK');
+        console.log('✅ Base de Datos PostgreSQL: Conectada');
 
-        // Sincroniza el modelo con PostgreSQL (crea la tabla si falta)
+        // Sincronizar modelos (Crea o actualiza la tabla en Render)
         await sequelize.sync();
-        console.log('✅ Tablas sincronizadas');
+        console.log('✅ Tablas de AquaBit sincronizadas');
 
         app.listen(PORT, () => {
-            console.log(`🚀 Servidor AquaBit operativo en puerto ${PORT}`);
+            console.log(`🚀 Servidor AquaBit OP en puerto ${PORT}`);
         });
     } catch (error) {
-        console.error('❌ Error de inicio:', error);
+        console.error('❌ Error crítico al iniciar el servidor:', error);
     }
 }
 
-bootstrap();
+iniciarApp();
