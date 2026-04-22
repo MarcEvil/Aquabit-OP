@@ -3,308 +3,274 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AquaBit OP - Sistema Esencial</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaBit OP - Sistema de Terreno</title>
     <style>
         :root {
-            --primary: #0066ff;
-            --success: #00875a;
-            --bg: #f4f7f9;
+            --primary: #2563eb;
+            --danger: #dc2626;
+            --bg: #f3f4f6;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: sans-serif;
             background: var(--bg);
             margin: 0;
-            padding: 15px;
-            color: #333;
+            padding: 20px;
         }
 
-        .card {
+        .container {
+            max-width: 500px;
+            margin: auto;
             background: white;
             padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Pestañas */
+        .tabs {
+            display: flex;
+            gap: 10px;
             margin-bottom: 20px;
         }
 
-        h1 {
-            font-size: 1.2rem;
-            margin: 0 0 15px 0;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .btn {
-            border: none;
+        .tab-btn {
+            flex: 1;
             padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-
-        .btn-camera {
-            background: var(--primary);
-            color: white;
-            font-size: 1rem;
-        }
-
-        .btn-send {
-            background: var(--success);
-            color: white;
-            font-size: 1.1rem;
-            margin-top: 10px;
-        }
-
-        .btn-mode {
-            background: #e2e8f0;
-            color: #475569;
-            width: 48%;
-            display: inline-block;
-        }
-
-        .btn-active {
-            background: var(--primary);
-            color: white;
-        }
-
-        #listaFotos {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding: 10px 0;
-            min-height: 80px;
-        }
-
-        .img-wrapper {
-            position: relative;
-            flex-shrink: 0;
-        }
-
-        .img-preview {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 2px solid #ddd;
-        }
-
-        .btn-del {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: red;
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 12px;
             border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #e5e7eb;
+            font-weight: bold;
         }
 
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Formularios */
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="file"],
         textarea {
             width: 100%;
-            border: 1px solid #ddd;
-            border-radius: 8px;
             padding: 10px;
-            box-sizing: border-box;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .historial-item {
-            background: #fff;
-            padding: 12px;
+            border: 1px solid #ccc;
             border-radius: 8px;
-            border-left: 4px solid var(--primary);
-            margin-bottom: 10px;
-            font-size: 13px;
+            box-sizing: border-box;
         }
 
-        .historial-imgs {
+        button.submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* Listado de Registros */
+        .registro-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .fotos-grid {
             display: flex;
-            gap: 5px;
-            margin-top: 8px;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 10px;
         }
 
-        .historial-imgs img {
-            width: 50px;
-            height: 50px;
+        .fotos-grid img {
+            width: 120px;
+            height: 120px;
             object-fit: cover;
-            border-radius: 4px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .btn-delete {
+            background: none;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
         }
     </style>
 </head>
 
 <body>
 
-    <h1>AquaBit OP - Terreno</h1>
+    <div class="container">
+        <h2>🌊 AquaBit OP</h2>
 
-    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-        <button id="btn-corte" class="btn btn-mode btn-active" onclick="setTipo('corte')">CORTE</button>
-        <button id="btn-repo" class="btn btn-mode" onclick="setTipo('reposicion')">REPOSICIÓN</button>
-    </div>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('corte')">CORTES</button>
+            <button class="tab-btn" onclick="switchTab('reposicion')">REPOSICIÓN</button>
+        </div>
 
-    <div class="card">
-        <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none"
-            onchange="procesarFoto()">
-        <button class="btn btn-camera" onclick="document.getElementById('fotoInput').click()">📸 TOMAR
-            FOTOGRAFÍA</button>
+        <div id="panel-corte" class="panel active">
+            <form id="form-corte">
+                <div class="form-group">
+                    <label>Tomar 3 Fotos (Obligatorio)</label>
+                    <input type="file" id="fotos-corte" accept="image/*" multiple required>
+                </div>
+                <div class="form-group">
+                    <label>Observaciones</label>
+                    <textarea id="obs-corte" rows="3" placeholder="Detalles del corte..."></textarea>
+                </div>
+                <button type="submit" class="submit-btn">GUARDAR CORTE</button>
+            </form>
 
-        <div id="listaFotos"></div>
+            <div id="lista-cortes">
+            </div>
+        </div>
 
-        <label style="font-size: 12px; font-weight: bold; color: #666;">OBSERVACIONES:</label>
-        <textarea id="obs" rows="3" placeholder="Detalles del terreno..."></textarea>
-
-        <button id="btnEnviar" class="btn btn-send" onclick="enviarRegistro()">SINCRONIZAR AHORA</button>
-    </div>
-
-    <div id="historialSection">
-        <h2 style="font-size: 14px; color: #666;">ÚLTIMOS REGISTROS (<span id="countLabel">0</span>)</h2>
-        <div id="historialContenedor"></div>
+        <div id="panel-reposicion" class="panel">
+            <form id="form-reposicion">
+                <div class="form-group">
+                    <label>Fotos Reposición</label>
+                    <input type="file" id="fotos-repo" accept="image/*" multiple>
+                </div>
+                <div class="form-group">
+                    <label>Observaciones</label>
+                    <textarea id="obs-repo" rows="3"></textarea>
+                </div>
+                <button type="submit" class="submit-btn">GUARDAR REPOSICIÓN</button>
+            </form>
+        </div>
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://mjxpqxyxkshtqlptccto.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qeHBxeHl4a3NodHFscHRjY3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MzQyOTAsImV4cCI6MjA5MjMxMDI5MH0.KGi6VT8g-zKeEi0NWHpkdzdKHP1mF11Ch0Q-46c2Wps';
         const API_URL = 'https://aquabit-op.onrender.com/api';
 
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        let tipoActual = 'corte';
-        let fotosParaSubir = [];
+        // 1. Lógica de Pestañas
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
 
-        function setTipo(t) {
-            tipoActual = t;
-            fotosParaSubir = [];
-            document.getElementById('listaFotos').innerHTML = '';
-            document.getElementById('obs').value = '';
-            document.getElementById('btn-corte').classList.toggle('btn-active', t === 'corte');
-            document.getElementById('btn-repo').classList.toggle('btn-active', t === 'reposicion');
-            cargarHistorial();
+            event.target.classList.add('active');
+            document.getElementById(`panel-${tab}`).classList.add('active');
+
+            if (tab === 'corte') cargarRegistros('corte');
         }
 
-        // Lógica de Vista Previa: Guarda el archivo REAL para evitar los 17 bytes
-        function procesarFoto() {
-            const input = document.getElementById('fotoInput');
-            if (input.files && input.files) {
-                const file = input.files;
-                fotosParaSubir.push(file);
-
-                const wrapper = document.createElement('div');
-                wrapper.className = 'img-wrapper';
-
-                const img = document.createElement('img');
-                img.src = URL.createObjectURL(file);
-                img.className = 'img-preview';
-
-                const btn = document.createElement('button');
-                btn.innerHTML = '×';
-                btn.className = 'btn-del';
-                btn.onclick = () => {
-                    wrapper.remove();
-                    fotosParaSubir = fotosParaSubir.filter(f => f !== file);
-                };
-
-                wrapper.appendChild(img);
-                wrapper.appendChild(btn);
-                document.getElementById('listaFotos').appendChild(wrapper);
-                input.value = ""; // Reset para permitir otra foto
-            }
-        }
-
-        async function enviarRegistro() {
-            if (fotosParaSubir.length === 0) return alert("Captura evidencia primero.");
-
-            const btn = document.getElementById('btnEnviar');
+        // 2. Enviar Datos al Servidor
+        document.getElementById('form-corte').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
             btn.disabled = true;
-            btn.innerText = "SUBIENDO IMÁGENES...";
+            btn.innerText = 'Subiendo a Supabase...';
+
+            const formData = new FormData();
+            const fotos = document.getElementById('fotos-corte').files;
+
+            if (fotos.length !== 3) {
+                alert("Debes seleccionar exactamente 3 fotos para el Corte.");
+                btn.disabled = false;
+                btn.innerText = 'GUARDAR CORTE';
+                return;
+            }
+
+            formData.append('tipo', 'corte');
+            formData.append('observaciones', document.getElementById('obs-corte').value);
+            for (let i = 0; i < fotos.length; i++) {
+                formData.append('fotos', fotos[i]);
+            }
 
             try {
-                const urlsFinales = [];
-                for (let file of fotosParaSubir) {
-                    // Nombre único para el bucket
-                    const fileName = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 4)}.jpg`;
-
-                    // SUBIDA DIRECTA: El SDK maneja el binario real aquí
-                    const { data, error } = await supabaseClient.storage
-                        .from('fotos-aquabit')
-                        .upload(fileName, file, {
-                            contentType: 'image/jpeg',
-                            cacheControl: '3600'
-                        });
-
-                    if (error) throw new Error("Supabase: " + error.message);
-
-                    const { data: { publicUrl } } = supabaseClient.storage
-                        .from('fotos-aquabit')
-                        .getPublicUrl(fileName);
-
-                    urlsFinales.push(publicUrl);
-                }
-
-                btn.innerText = "REGISTRANDO DATOS...";
-                const res = await fetch(`${API_URL}/upload`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        tipo: tipoActual,
-                        observaciones: document.getElementById('obs').value,
-                        fotos: urlsFinales
-                    })
-                });
-
+                const res = await fetch(`${API_URL}/upload`, { method: 'POST', body: formData });
                 if (res.ok) {
-                    alert("✅ REGISTRO COMPLETADO");
-                    location.reload();
+                    alert('✅ Registro guardado con éxito');
+                    e.target.reset();
+                    cargarRegistros('corte');
                 }
             } catch (err) {
-                alert("FALLO TÉCNICO: " + err.message);
+                alert('❌ Error al conectar con el servidor');
+            } finally {
                 btn.disabled = false;
-                btn.innerText = "REINTENTAR SINCRONIZACIÓN";
+                btn.innerText = 'GUARDAR CORTE';
             }
-        }
+        });
 
-        async function cargarHistorial() {
-            const cont = document.getElementById('historialContenedor');
+        // 3. Cargar Listado (Hacia abajo)
+        async function cargarRegistros(tipo) {
+            const contenedor = document.getElementById('lista-cortes');
+            contenedor.innerHTML = '<p class="loading">Cargando historial...</p>';
+
             try {
-                const res = await fetch(`${API_URL}/registros/${tipoActual}`);
-                const data = await res.json();
-                document.getElementById('countLabel').innerText = data.length;
-                cont.innerHTML = "";
+                const res = await fetch(`${API_URL}/registros/${tipo}`);
+                const datos = await res.json();
 
-                data.forEach(reg => {
-                    const div = document.createElement('div');
-                    div.className = 'historial-item';
-                    div.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; font-size:10px; color:#999; margin-bottom:5px;">
-                            <span>${new Date(reg.createdAt).toLocaleString()}</span>
-                            <span style="color:red; font-weight:bold" onclick="eliminar(${reg.id})">ELIMINAR</span>
-                        </div>
-                        <strong>${reg.observaciones || 'Sin notas.'}</strong>
-                        <div class="historial-imgs">
-                            ${reg.fotos.map(u => `<img src="${u}">`).join('')}
-                        </div>
-                    `;
-                    cont.appendChild(div);
+                contenedor.innerHTML = '<h3>Historial de Cortes</h3>';
+
+                datos.forEach(reg => {
+                    const card = document.createElement('div');
+                    card.className = 'registro-card';
+                    card.innerHTML = `
+                    <div class="fotos-grid">
+                        ${reg.fotos.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('')}
+                    </div>
+                    <p><strong>Fecha:</strong> ${new Date(reg.createdAt).toLocaleString()}</p>
+                    <p><strong>Obs:</strong> ${reg.observaciones || 'Sin notas'}</p>
+                    <button class="btn-delete" onclick="eliminarRegistro(${reg.id})">🗑️ Eliminar fotos</button>
+                `;
+                    contenedor.appendChild(card);
                 });
-            } catch (e) { }
-        }
-
-        async function eliminar(id) {
-            if (confirm('¿Borrar registro?')) {
-                await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
-                cargarHistorial();
+            } catch (err) {
+                contenedor.innerHTML = '<p>Error al cargar historial.</p>';
             }
         }
 
-        // Inicializar
-        cargarHistorial();
+        // 4. Eliminar Registro
+        async function eliminarRegistro(id) {
+            if (!confirm('¿Seguro que quieres eliminar este grupo de fotos?')) return;
+
+            try {
+                const res = await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
+                if (res.ok) cargarRegistros('corte');
+            } catch (err) {
+                alert('No se pudo eliminar');
+            }
+        }
+
+        // Cargar datos al iniciar
+        window.onload = () => cargarRegistros('corte');
+
     </script>
+
 </body>
 
 </html>
