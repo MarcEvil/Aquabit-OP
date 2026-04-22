@@ -10,6 +10,7 @@
         :root {
             --primary: #2563eb;
             --success: #10b981;
+            --danger: #dc2626;
             --bg: #f3f4f6;
         }
 
@@ -29,7 +30,6 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        /* Pestañas */
         .tabs {
             display: flex;
             gap: 10px;
@@ -44,7 +44,6 @@
             cursor: pointer;
             background: #e5e7eb;
             font-weight: bold;
-            transition: 0.3s;
         }
 
         .tab-btn.active {
@@ -60,7 +59,6 @@
             display: block;
         }
 
-        /* Botón Cámara */
         .btn-cam {
             background: var(--success);
             color: white;
@@ -71,15 +69,13 @@
             margin-bottom: 10px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 16px;
         }
 
-        /* Contenedor de Vista Previa (El cuadrado inferior) */
         .preview-container {
             display: flex;
             gap: 10px;
             overflow-x: auto;
-            margin-top: 10px;
+            margin: 10px 0;
             padding: 10px;
             min-height: 110px;
             border: 2px dashed #ccc;
@@ -103,7 +99,6 @@
             box-sizing: border-box;
             margin-top: 10px;
             font-size: 14px;
-            resize: none;
         }
 
         .checkbox-group {
@@ -117,12 +112,6 @@
             border: 1px solid #bbf7d0;
         }
 
-        .checkbox-group input {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
         .submit-btn {
             width: 100%;
             padding: 15px;
@@ -132,13 +121,55 @@
             border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
-            margin-top: 15px;
             font-weight: bold;
         }
 
-        .submit-btn:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
+        /* Estilos del Historial */
+        .historial-section {
+            margin-top: 30px;
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+        }
+
+        .registro-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .fotos-grid {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .fotos-grid img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .btn-delete {
+            background: none;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .loading-text {
+            text-align: center;
+            color: #666;
+            font-style: italic;
         }
     </style>
 </head>
@@ -154,22 +185,23 @@
         </div>
 
         <div id="panel-corte" class="panel active">
-            <button type="button" class="btn-cam" onclick="document.getElementById('input-corte').click()">📸 TOMAR FOTO
+            <button class="btn-cam" onclick="document.getElementById('input-corte').click()">📸 TOMAR FOTO
                 (CORTE)</button>
             <input type="file" id="input-corte" accept="image/*" capture="environment" multiple style="display:none">
-
-            <div id="preview-corte" class="preview-container">
-            </div>
-
-            <textarea id="obs-corte" rows="3" placeholder="Observaciones de terreno..."></textarea>
+            <div id="preview-corte" class="preview-container"></div>
+            <textarea id="obs-corte" placeholder="Notas del corte..."></textarea>
             <button id="btn-save-corte" class="submit-btn" onclick="enviarDatos('corte')">GUARDAR CORTE</button>
+
+            <div class="historial-section">
+                <h3>Historial de Cortes</h3>
+                <div id="lista-corte"></div>
+            </div>
         </div>
 
         <div id="panel-reposicion" class="panel">
-            <button type="button" class="btn-cam" onclick="document.getElementById('input-repo').click()">📸 TOMAR FOTO
+            <button class="btn-cam" onclick="document.getElementById('input-repo').click()">📸 TOMAR FOTO
                 (REPO)</button>
             <input type="file" id="input-repo" accept="image/*" capture="environment" multiple style="display:none">
-
             <div id="preview-repo" class="preview-container"></div>
 
             <div class="checkbox-group">
@@ -177,122 +209,140 @@
                 <label for="check-repo"><strong>Servicio verificado en terreno</strong></label>
             </div>
 
-            <textarea id="obs-repo" rows="3" placeholder="Detalles de la reposición..."></textarea>
+            <textarea id="obs-repo" placeholder="Notas de reposición..."></textarea>
             <button id="btn-save-repo" class="submit-btn" onclick="enviarDatos('reposicion')">GUARDAR
                 REPOSICIÓN</button>
+
+            <div class="historial-section">
+                <h3>Historial de Reposiciones</h3>
+                <div id="lista-reposicion"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Configuración de conexiones
         const SUPABASE_URL = 'https://mjxpqxyxkshtqlptccto.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qeHBxeHl4a3NodHFscHRjY3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MzQyOTAsImV4cCI6MjA5MjMxMDI5MH0.KGi6VT8g-zKeEi0NWHpkdzdKHP1mF11Ch0Q-46c2Wps';
         const API_URL = 'https://aquabit-op.onrender.com/api';
-
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Arreglos para guardar los archivos binarios reales
         let fotosCorte = [];
         let fotosRepo = [];
 
-        // 1. Lógica de Pestañas
         function cambiarTab(tipo) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-
             document.getElementById(`panel-${tipo}`).classList.add('active');
             document.getElementById(`tab-${tipo}-btn`).classList.add('active');
+            cargarHistorial(tipo);
         }
 
-        // 2. Función de Vista Previa Inmediata (Corrección Técnica)
-        function configurarVistaPrevia(inputId, storageArray, previewId) {
-            const input = document.getElementById(inputId);
-            const container = document.getElementById(previewId);
-
-            input.onchange = function (e) {
-                const selectedFiles = Array.from(e.target.files);
-
-                selectedFiles.forEach(file => {
-                    storageArray.push(file); // Mantenemos el archivo en memoria
-
+        function configurarInput(inputId, storageArray, previewId) {
+            document.getElementById(inputId).onchange = function (e) {
+                const files = Array.from(e.target.files);
+                files.forEach(file => {
+                    storageArray.push(file);
                     const reader = new FileReader();
-                    reader.onload = function (event) {
-                        const imgDiv = document.createElement('div');
-                        imgDiv.className = 'preview-item';
-                        imgDiv.innerHTML = `<img src="${event.target.result}">`;
-                        container.appendChild(imgDiv);
+                    reader.onload = (ev) => {
+                        const div = document.createElement('div');
+                        div.className = 'preview-item';
+                        div.innerHTML = `<img src="${ev.target.result}">`;
+                        document.getElementById(previewId).appendChild(div);
                     };
-                    reader.readAsDataURL(file); // Genera la miniatura local
+                    reader.readAsDataURL(file);
                 });
             };
         }
 
-        // Inicializamos la escucha de fotos
-        configurarVistaPrevia('input-corte', fotosCorte, 'preview-corte');
-        configurarVistaPrevia('input-repo', fotosRepo, 'preview-repo');
+        configurarInput('input-corte', fotosCorte, 'preview-corte');
+        configurarInput('input-repo', fotosRepo, 'preview-repo');
 
-        // 3. Envío final a Supabase y Render
+        async function cargarHistorial(tipo) {
+            const contenedor = document.getElementById(tipo === 'corte' ? 'lista-corte' : 'lista-reposicion');
+            contenedor.innerHTML = '<p class="loading-text">Cargando registros...</p>';
+
+            try {
+                const res = await fetch(`${API_URL}/registros/${tipo}`);
+                const datos = await res.json();
+                contenedor.innerHTML = '';
+
+                datos.forEach(reg => {
+                    const card = document.createElement('div');
+                    card.className = 'registro-card';
+                    card.innerHTML = `
+                        <div class="fotos-grid">
+                            ${reg.fotos.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('')}
+                        </div>
+                        <p><strong>Fecha:</strong> ${new Date(reg.createdAt).toLocaleString()}</p>
+                        <p><strong>Obs:</strong> ${reg.observaciones || 'Sin notas'}</p>
+                        <button class="btn-delete" onclick="eliminarRegistro(${reg.id}, '${tipo}')">🗑️ ELIMINAR</button>
+                    `;
+                    contenedor.appendChild(card);
+                });
+            } catch (err) {
+                contenedor.innerHTML = '<p>Error al cargar el historial.</p>';
+            }
+        }
+
+        async function eliminarRegistro(id, tipo) {
+            if (!confirm('¿Seguro que quieres eliminar este registro?')) return;
+            try {
+                const res = await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    alert("Registro eliminado");
+                    cargarHistorial(tipo);
+                }
+            } catch (err) { alert("No se pudo eliminar"); }
+        }
+
         async function enviarDatos(tipo) {
             const btn = document.getElementById(tipo === 'corte' ? 'btn-save-corte' : 'btn-save-repo');
             const files = tipo === 'corte' ? fotosCorte : fotosRepo;
-            const obsText = document.getElementById(tipo === 'corte' ? 'obs-corte' : 'obs-repo').value;
-            const isChecked = tipo === 'reposicion' ? document.getElementById('check-repo').checked : false;
+            const obs = document.getElementById(tipo === 'corte' ? 'obs-corte' : 'obs-repo').value;
+            const check = tipo === 'reposicion' ? document.getElementById('check-repo').checked : false;
 
-            if (files.length === 0) {
-                return alert("⚠️ Debes capturar al menos una foto.");
-            }
+            if (files.length === 0) return alert("Captura al menos una foto");
 
             btn.disabled = true;
-            btn.innerText = "🚀 SUBIENDO IMÁGENES...";
+            btn.innerText = "SUBIENDO IMÁGENES...";
 
             try {
-                const urlsFinales = [];
-
-                // Subimos cada archivo al Bucket de Supabase
+                const urls = [];
                 for (let file of files) {
-                    const nombreUnico = `terreno_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
-
-                    const { data, error } = await supabaseClient.storage
-                        .from('fotos-aquabit')
-                        .upload(nombreUnico, file);
-
+                    const name = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
+                    const { error } = await supabaseClient.storage.from('fotos-aquabit').upload(name, file);
                     if (error) throw error;
-
-                    const { data: { publicUrl } } = supabaseClient.storage
-                        .from('fotos-aquabit')
-                        .getPublicUrl(nombreUnico);
-
-                    urlsFinales.push(publicUrl);
+                    const { data: { publicUrl } } = supabaseClient.storage.from('fotos-aquabit').getPublicUrl(name);
+                    urls.push(publicUrl);
                 }
 
-                btn.innerText = "💾 GUARDANDO EN BASE DE DATOS...";
-
-                // Enviamos las URLs al backend de Render
-                const res = await fetch(`${API_URL}/upload`, {
+                await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        tipo: tipo,
-                        observaciones: isChecked ? "[VERIFICADO] " + obsText : obsText,
-                        fotos: urlsFinales
+                        tipo,
+                        observaciones: check ? "[VERIFICADO] " + obs : obs,
+                        fotos: urls
                     })
                 });
 
-                if (res.ok) {
-                    alert("✅ Guardado con éxito.");
-                    location.reload(); // Recarga para limpiar memoria del móvil
-                } else {
-                    throw new Error("Fallo en la comunicación con Render.");
-                }
-
-            } catch (err) {
-                alert("❌ ERROR: " + err.message);
+                alert("✅ Guardado con éxito");
+                // Limpiamos los arreglos y la vista previa sin recargar toda la página
+                if (tipo === 'corte') fotosCorte = []; else fotosRepo = [];
+                document.getElementById(tipo === 'corte' ? 'preview-corte' : 'preview-repo').innerHTML = '';
+                document.getElementById(tipo === 'corte' ? 'obs-corte' : 'obs-repo').value = '';
                 btn.disabled = false;
-                btn.innerText = "REINTENTAR GUARDAR";
+                btn.innerText = `GUARDAR ${tipo.toUpperCase()}`;
+                cargarHistorial(tipo);
+            } catch (err) {
+                alert("Error: " + err.message);
+                btn.disabled = false;
             }
         }
-    </script>
 
+        // Carga inicial
+        window.onload = () => cargarHistorial('corte');
+    </script>
 </body>
 
 </html>
