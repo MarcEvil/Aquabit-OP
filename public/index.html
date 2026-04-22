@@ -9,7 +9,7 @@
     <style>
         :root {
             --primary: #2563eb;
-            --danger: #dc2626;
+            --success: #10b981;
             --bg: #f3f4f6;
         }
 
@@ -17,7 +17,7 @@
             font-family: sans-serif;
             background: var(--bg);
             margin: 0;
-            padding: 20px;
+            padding: 15px;
         }
 
         .container {
@@ -58,38 +58,54 @@
             display: block;
         }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
+        .btn-cam {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            width: 100%;
+            margin-bottom: 10px;
+            cursor: pointer;
             font-weight: bold;
+            font-size: 16px;
         }
 
-        input[type="file"],
+        /* Contenedor de Vista Previa */
+        .preview-container {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            margin-top: 10px;
+            padding: 5px;
+            min-height: 100px;
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+        }
+
+        .preview-item {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .preview-item img {
+            width: 90px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid var(--primary);
+        }
+
         textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 8px;
             box-sizing: border-box;
+            margin-top: 10px;
         }
 
-        .btn-cam {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 8px;
-            width: 100%;
-            margin-bottom: 10px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        button.submit-btn {
+        .submit-btn {
             width: 100%;
             padding: 15px;
             background: var(--primary);
@@ -98,48 +114,23 @@
             border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
+            margin-top: 15px;
+            font-weight: bold;
         }
 
-        button.submit-btn:disabled {
+        .submit-btn:disabled {
             background: #94a3b8;
-        }
-
-        .registro-card {
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            padding: 15px;
-            border-radius: 12px;
-            margin-top: 20px;
-        }
-
-        .fotos-grid {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 10px;
-        }
-
-        .fotos-grid img {
-            width: 120px;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid #ddd;
         }
 
         .checkbox-group {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 15px;
-            background: #f9fafb;
+            margin: 15px 0;
+            background: #f0fdf4;
             padding: 10px;
             border-radius: 8px;
-        }
-
-        .checkbox-group input {
-            width: 20px;
-            height: 20px;
+            border: 1px solid #bbf7d0;
         }
     </style>
 </head>
@@ -153,45 +144,24 @@
         </div>
 
         <div id="panel-corte" class="panel active">
-            <form id="form-corte">
-                <div class="form-group">
-                    <label>Evidencia de Corte (3 fotos)</label>
-                    <button type="button" class="btn-cam" onclick="document.getElementById('fotos-corte').click()">📸
-                        ABRIR CÁMARA</button>
-                    <input type="file" id="fotos-corte" accept="image/*" capture="environment" multiple required
-                        style="display:none">
-                </div>
-                <div class="form-group">
-                    <label>Observaciones</label>
-                    <textarea id="obs-corte" rows="3"></textarea>
-                </div>
-                <button type="submit" class="submit-btn" id="btn-corte-submit">GUARDAR CORTE</button>
-            </form>
-            <div id="lista-cortes"></div>
+            <button type="button" class="btn-cam" onclick="document.getElementById('input-corte').click()">📸 TOMAR FOTO
+                (CORTE)</button>
+            <input type="file" id="input-corte" accept="image/*" capture="environment" multiple style="display:none">
+            <div id="preview-corte" class="preview-container"></div>
+            <textarea id="obs-corte" placeholder="Observaciones de corte..."></textarea>
+            <button id="btn-save-corte" class="submit-btn" onclick="enviar('corte')">GUARDAR CORTE</button>
         </div>
 
         <div id="panel-reposicion" class="panel">
-            <form id="form-reposicion">
-                <div class="form-group">
-                    <label>Evidencia de Reposición</label>
-                    <button type="button" class="btn-cam" onclick="document.getElementById('fotos-repo').click()">📸
-                        ABRIR CÁMARA</button>
-                    <input type="file" id="fotos-repo" accept="image/*" capture="environment" multiple
-                        style="display:none">
-                </div>
-
-                <div class="checkbox-group">
-                    <input type="checkbox" id="check-verificado">
-                    <label for="check-verificado" style="margin:0">Servicio verificado en terreno</label>
-                </div>
-
-                <div class="form-group">
-                    <label>Observaciones</label>
-                    <textarea id="obs-repo" rows="3"></textarea>
-                </div>
-                <button type="submit" class="submit-btn" id="btn-repo-submit">GUARDAR REPOSICIÓN</button>
-            </form>
-            <div id="lista-reposicion"></div>
+            <button type="button" class="btn-cam" onclick="document.getElementById('input-repo').click()">📸 TOMAR FOTO
+                (REPO)</button>
+            <input type="file" id="input-repo" accept="image/*" capture="environment" multiple style="display:none">
+            <div id="preview-repo" class="preview-container"></div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="check-repo"> <label for="check-repo">Servicio verificado</label>
+            </div>
+            <textarea id="obs-repo" placeholder="Observaciones de reposición..."></textarea>
+            <button id="btn-save-repo" class="submit-btn" onclick="enviar('reposicion')">GUARDAR REPOSICIÓN</button>
         </div>
     </div>
 
@@ -199,96 +169,79 @@
         const SUPABASE_URL = 'https://mjxpqxyxkshtqlptccto.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qeHBxeHl4a3NodHFscHRjY3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MzQyOTAsImV4cCI6MjA5MjMxMDI5MH0.KGi6VT8g-zKeEi0NWHpkdzdKHP1mF11Ch0Q-46c2Wps';
         const API_URL = 'https://aquabit-op.onrender.com/api';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let storageCorte = [];
+        let storageRepo = [];
 
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             event.target.classList.add('active');
             document.getElementById(`panel-${tab}`).classList.add('active');
-            cargarRegistros(tab);
         }
 
-        async function subirASupabase(files) {
-            const urls = [];
-            for (const file of files) {
-                const fileName = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
-                const { data, error } = await supabaseClient.storage
-                    .from('fotos-aquabit')
-                    .upload(fileName, file);
-                if (error) throw error;
-                const { data: { publicUrl } } = supabaseClient.storage.from('fotos-aquabit').getPublicUrl(fileName);
-                urls.push(publicUrl);
-            }
-            return urls;
+        // --- LÓGICA DE VISTA PREVIA (REPARADA) ---
+        function setupPreview(inputId, storageArray, previewId) {
+            document.getElementById(inputId).addEventListener('change', function (e) {
+                const files = Array.from(e.target.files);
+                const container = document.getElementById(previewId);
+
+                files.forEach(file => {
+                    storageArray.push(file); // Guardamos el binario real
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const div = document.createElement('div');
+                        div.className = 'preview-item';
+                        div.innerHTML = `<img src="${event.target.result}">`;
+                        container.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
         }
 
-        async function manejarEnvio(e, tipo) {
-            e.preventDefault();
-            const btn = e.target.querySelector('button[type="submit"]');
-            const inputId = tipo === 'corte' ? 'fotos-corte' : 'fotos-repo';
-            const obsId = tipo === 'corte' ? 'obs-corte' : 'obs-repo';
-            const fileInput = document.getElementById(inputId);
-            const obsValue = document.getElementById(obsId).value;
+        setupPreview('input-corte', storageCorte, 'preview-corte');
+        setupPreview('input-repo', storageRepo, 'preview-repo');
 
-            // Lógica extra para el checkbox de reposición
-            let finalObs = obsValue;
-            if (tipo === 'reposicion' && document.getElementById('check-verificado').checked) {
-                finalObs = "[VERIFICADO] " + obsValue;
-            }
+        async function enviar(tipo) {
+            const files = tipo === 'corte' ? storageCorte : storageRepo;
+            const btn = document.getElementById(tipo === 'corte' ? 'btn-save-corte' : 'btn-save-repo');
+            const obs = document.getElementById(tipo === 'corte' ? 'obs-corte' : 'obs-repo').value;
+            const check = tipo === 'reposicion' ? document.getElementById('check-repo').checked : false;
 
-            if (tipo === 'corte' && fileInput.files.length !== 3) return alert("Selecciona 3 fotos.");
-            if (fileInput.files.length === 0) return alert("Captura fotos primero.");
+            if (files.length === 0) return alert("Faltan fotos");
 
             btn.disabled = true;
-            btn.innerText = 'Subiendo...';
+            btn.innerText = "SUBIENDO...";
 
             try {
-                const urls = await subirASupabase(fileInput.files);
-                const res = await fetch(`${API_URL}/upload`, {
+                const urls = [];
+                for (let file of files) {
+                    const name = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
+                    const { data, error } = await supabase.storage.from('fotos-aquabit').upload(name, file);
+                    if (error) throw error;
+                    const { data: { publicUrl } } = supabase.storage.from('fotos-aquabit').getPublicUrl(name);
+                    urls.push(publicUrl);
+                }
+
+                await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tipo, observaciones: finalObs, fotos: urls })
+                    body: JSON.stringify({
+                        tipo,
+                        observaciones: check ? "[VERIFICADO] " + obs : obs,
+                        fotos: urls
+                    })
                 });
 
-                if (res.ok) {
-                    alert('✅ Éxito');
-                    e.target.reset();
-                    cargarRegistros(tipo);
-                }
+                alert("✅ Guardado correctamente");
+                location.reload();
             } catch (err) {
-                alert('Error: ' + err.message);
-            } finally {
+                alert("Error: " + err.message);
                 btn.disabled = false;
-                btn.innerText = `GUARDAR ${tipo.toUpperCase()}`;
             }
         }
-
-        document.getElementById('form-corte').onsubmit = (e) => manejarEnvio(e, 'corte');
-        document.getElementById('form-reposicion').onsubmit = (e) => manejarEnvio(e, 'reposicion');
-
-        async function cargarRegistros(tipo) {
-            const cont = document.getElementById(tipo === 'corte' ? 'lista-cortes' : 'lista-reposicion');
-            cont.innerHTML = '...';
-            try {
-                const res = await fetch(`${API_URL}/registros/${tipo}`);
-                const datos = await res.json();
-                cont.innerHTML = '';
-                datos.forEach(reg => {
-                    const card = document.createElement('div');
-                    card.className = 'registro-card';
-                    card.innerHTML = `
-                        <div class="fotos-grid">${reg.fotos.map(u => `<img src="${u}">`).join('')}</div>
-                        <p><small>${new Date(reg.createdAt).toLocaleString()}</small></p>
-                        <p>${reg.observaciones || ''}</p>
-                    `;
-                    cont.appendChild(card);
-                });
-            } catch (e) { }
-        }
-
-        window.onload = () => cargarRegistros('corte');
     </script>
 </body>
 
