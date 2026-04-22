@@ -4,94 +4,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AquaBit OP - Esencial</title>
+    <title>AquaBit OP - Versión Original</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: sans-serif;
             padding: 20px;
-            line-height: 1.5;
-            color: #333;
         }
 
-        .section {
+        .registro {
             border: 1px solid #ccc;
             padding: 15px;
-            margin-bottom: 20px;
             border-radius: 8px;
+            margin-bottom: 20px;
         }
 
-        .preview-container {
+        .preview {
             display: flex;
             gap: 10px;
-            margin: 10px 0;
-            overflow-x: auto;
+            margin-top: 10px;
         }
 
-        .preview-img {
-            width: 100px;
-            height: 100px;
-            object-cover: cover;
-            border: 1px solid #000;
-        }
-
-        button {
-            padding: 10px 15px;
-            cursor: pointer;
-            background: #0052cc;
-            color: white;
-            border: none;
+        .preview img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
             border-radius: 4px;
         }
 
-        button:disabled {
-            background: #ccc;
+        #historial {
+            margin-top: 20px;
         }
 
-        textarea {
-            width: 100%;
-            margin: 10px 0;
-        }
-
-        .historial-item {
-            border-bottom: 1px solid #eee;
-            padding: 10px 0;
+        .card {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 
 <body>
+    <h1>AquaBit OP - Registro de Terreno</h1>
 
-    <h1>AquaBit OP - Panel de Terreno</h1>
+    <div class="registro">
+        <label>Tipo de Operación:</label>
+        <select id="tipo">
+            <option value="corte">Corte</option>
+            <option value="reposicion">Reposición</option>
+        </select>
 
-    <div class="section">
-        <strong>Modo Actual:</strong>
-        <button onclick="setTipo('corte')">Corte</button>
-        <button onclick="setTipo('reposicion')">Reposición</button>
-        <p>Seleccionado: <b id="labelTipo">CORTE</b></p>
-    </div>
+        <br><br>
 
-    <div class="section">
-        <h3>Nuevo Registro</h3>
+        <label>Capturar Evidencia:</label>
+        <input type="file" id="fotoInput" accept="image/*" capture="environment">
+        <button onclick="agregarFoto()">Agregar Foto</button>
 
-        <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none"
-            onchange="procesarFoto()">
-        <button onclick="document.getElementById('fotoInput').click()">📸 CAPTURAR FOTO</button>
+        <div id="listaFotos" class="preview"></div>
 
-        <div id="listaFotos" class="preview-container">
-        </div>
+        <br>
 
         <label>Observaciones:</label><br>
-        <textarea id="obs" rows="4"></textarea>
+        <textarea id="obs" rows="4" style="width: 100%"></textarea>
 
-        <button id="btnEnviar" onclick="enviarRegistro()" style="background: #00875a; width: 100%; font-weight: bold;">
-            SINCRONIZAR AHORA
-        </button>
+        <br><br>
+
+        <button id="btnEnviar" onclick="enviar()">Sincronizar Datos</button>
     </div>
 
-    <div class="section">
-        <h3>Historial Local (<span id="countLabel">0</span>)</h3>
-        <div id="historialContenedor"></div>
+    <div id="historial">
+        <h3>Historial</h3>
+        <div id="contenedor"></div>
     </div>
 
     <script>
@@ -100,105 +83,66 @@
         const API_URL = 'https://aquabit-op.onrender.com/api';
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        let tipoActual = 'corte';
-        let fotosParaSubir = []; // Almacena archivos reales (File)
+        let fotos = [];
 
-        function setTipo(t) {
-            tipoActual = t;
-            fotosParaSubir = [];
-            document.getElementById('listaFotos').innerHTML = '';
-            document.getElementById('labelTipo').innerText = t.toUpperCase();
-            cargarHistorial();
-        }
-
-        // Recupera la vista previa y mantiene el archivo real en memoria
-        function procesarFoto() {
+        function agregarFoto() {
             const input = document.getElementById('fotoInput');
-            const lista = document.getElementById('listaFotos');
-
             if (input.files && input.files) {
                 const file = input.files;
-                fotosParaSubir.push(file);
+                fotos.push(file); // Guardar el archivo real
 
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
-                img.className = "preview-img";
-                lista.appendChild(img);
+                document.getElementById('listaFotos').appendChild(img);
 
-                input.value = ""; // Limpiar para permitir otra foto
+                input.value = ""; // Limpiar input para la siguiente
             }
         }
 
-        async function enviarRegistro() {
-            if (fotosParaSubir.length === 0) return alert("Saca fotos primero.");
+        async function enviar() {
+            if (fotos.length === 0) return alert("Sube al menos una foto.");
 
             const btn = document.getElementById('btnEnviar');
             btn.disabled = true;
-            btn.innerText = "Subiendo imágenes...";
+            btn.innerText = "Subiendo...";
 
             try {
-                const urlsFinales = [];
-                for (let file of fotosParaSubir) {
-                    const fileName = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 4)}.jpg`;
+                const urls = [];
+                for (let file of fotos) {
+                    const name = `${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
 
-                    // Subida binaria directa
                     const { data, error } = await supabaseClient.storage
                         .from('fotos-aquabit')
-                        .upload(fileName, file, { contentType: 'image/jpeg' });
+                        .upload(name, file);
 
                     if (error) throw error;
 
                     const { data: { publicUrl } } = supabaseClient.storage
                         .from('fotos-aquabit')
-                        .getPublicUrl(fileName);
+                        .getPublicUrl(name);
 
-                    urlsFinales.push(publicUrl);
+                    urls.push(publicUrl);
                 }
 
-                btn.innerText = "Guardando datos...";
                 const res = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        tipo: tipoActual,
+                        tipo: document.getElementById('tipo').value,
                         observaciones: document.getElementById('obs').value,
-                        fotos: urlsFinales
+                        fotos: urls
                     })
                 });
 
                 if (res.ok) {
-                    alert("✅ Guardado");
+                    alert("Éxito");
                     location.reload();
                 }
             } catch (err) {
                 alert("Error: " + err.message);
                 btn.disabled = false;
-                btn.innerText = "SINCRONIZAR AHORA";
             }
         }
-
-        async function cargarHistorial() {
-            const listado = document.getElementById('historialContenedor');
-            try {
-                const res = await fetch(`${API_URL}/registros/${tipoActual}`);
-                const data = await res.json();
-                document.getElementById('countLabel').innerText = data.length;
-                listado.innerHTML = "";
-
-                data.forEach(reg => {
-                    const item = document.createElement('div');
-                    item.className = 'historial-item';
-                    item.innerHTML = `
-                        <small>${new Date(reg.createdAt).toLocaleString()}</small><br>
-                        <b>${reg.observaciones || 'Sin obs.'}</b><br>
-                        ${reg.fotos.map(url => `<img src="${url}" width="50">`).join(' ')}
-                    `;
-                    listado.appendChild(item);
-                });
-            } catch (e) { }
-        }
-
-        setTipo('corte');
     </script>
 </body>
 
