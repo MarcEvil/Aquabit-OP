@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AquaBit OP - Sistema de Terreno</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #2563eb;
@@ -25,10 +26,9 @@
             background: white;
             padding: 20px;
             border-radius: 15px;
-            shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        /* Pestañas */
         .tabs {
             display: flex;
             gap: 10px;
@@ -50,7 +50,6 @@
             color: white;
         }
 
-        /* Formularios */
         .panel {
             display: none;
         }
@@ -89,7 +88,10 @@
             cursor: pointer;
         }
 
-        /* Listado de Registros */
+        button.submit-btn:disabled {
+            background: #94a3b8;
+        }
+
         .registro-card {
             background: #fff;
             border: 1px solid #e5e7eb;
@@ -121,21 +123,14 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 12px;
-        }
-
-        .loading {
-            text-align: center;
-            color: #666;
-            font-style: italic;
+            margin-top: 10px;
         }
     </style>
 </head>
 
 <body>
-
     <div class="container">
         <h2>🌊 AquaBit OP</h2>
-
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('corte')">CORTES</button>
             <button class="tab-btn" onclick="switchTab('reposicion')">REPOSICIÓN</button>
@@ -144,18 +139,16 @@
         <div id="panel-corte" class="panel active">
             <form id="form-corte">
                 <div class="form-group">
-                    <label>Tomar 3 Fotos (Obligatorio)</label>
+                    <label>Fotos (Corte requiere 3)</label>
                     <input type="file" id="fotos-corte" accept="image/*" multiple required>
                 </div>
                 <div class="form-group">
                     <label>Observaciones</label>
-                    <textarea id="obs-corte" rows="3" placeholder="Detalles del corte..."></textarea>
+                    <textarea id="obs-corte" rows="3"></textarea>
                 </div>
-                <button type="submit" class="submit-btn">GUARDAR CORTE</button>
+                <button type="submit" class="submit-btn" id="btn-corte-submit">GUARDAR CORTE</button>
             </form>
-
-            <div id="lista-cortes">
-            </div>
+            <div id="lista-cortes"></div>
         </div>
 
         <div id="panel-reposicion" class="panel">
@@ -168,109 +161,114 @@
                     <label>Observaciones</label>
                     <textarea id="obs-repo" rows="3"></textarea>
                 </div>
-                <button type="submit" class="submit-btn">GUARDAR REPOSICIÓN</button>
+                <button type="submit" class="submit-btn" id="btn-repo-submit">GUARDAR REPOSICIÓN</button>
             </form>
+            <div id="lista-reposicion"></div>
         </div>
     </div>
 
     <script>
+        // CONFIGURACIÓN (Asegúrate de que sean tus credenciales)
+        const SUPABASE_URL = 'https://mjxpqxyxkshtqlptccto.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qeHBxeHl4a3NodHFscHRjY3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MzQyOTAsImV4cCI6MjA5MjMxMDI5MH0.KGi6VT8g-zKeEi0NWHpkdzdKHP1mF11Ch0Q-46c2Wps';
         const API_URL = 'https://aquabit-op.onrender.com/api';
 
-        // 1. Lógica de Pestañas
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let currentTab = 'corte';
+
         function switchTab(tab) {
+            currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-
             event.target.classList.add('active');
             document.getElementById(`panel-${tab}`).classList.add('active');
-
-            if (tab === 'corte') cargarRegistros('corte');
+            cargarRegistros(tab);
         }
 
-        // 2. Enviar Datos al Servidor
-        document.getElementById('form-corte').addEventListener('submit', async (e) => {
+        async function subirASupabase(files) {
+            const urls = [];
+            for (const file of files) {
+                const fileName = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
+                const { data, error } = await supabaseClient.storage
+                    .from('fotos-aquabit')
+                    .upload(fileName, file);
+
+                if (error) throw error;
+                const { data: { publicUrl } } = supabaseClient.storage.from('fotos-aquabit').getPublicUrl(fileName);
+                urls.push(publicUrl);
+            }
+            return urls;
+        }
+
+        async function manejarEnvio(e, tipo) {
             e.preventDefault();
             const btn = e.target.querySelector('button');
+            const fileInput = document.getElementById(`fotos-${tipo === 'corte' ? 'corte' : 'repo'}`);
+            const obs = document.getElementById(`obs-${tipo === 'corte' ? 'corte' : 'repo'}`).value;
+
+            if (tipo === 'corte' && fileInput.files.length !== 3) return alert("Corte requiere 3 fotos.");
+            if (fileInput.files.length === 0) return alert("Selecciona fotos.");
+
             btn.disabled = true;
-            btn.innerText = 'Subiendo a Supabase...';
-
-            const formData = new FormData();
-            const fotos = document.getElementById('fotos-corte').files;
-
-            if (fotos.length !== 3) {
-                alert("Debes seleccionar exactamente 3 fotos para el Corte.");
-                btn.disabled = false;
-                btn.innerText = 'GUARDAR CORTE';
-                return;
-            }
-
-            formData.append('tipo', 'corte');
-            formData.append('observaciones', document.getElementById('obs-corte').value);
-            for (let i = 0; i < fotos.length; i++) {
-                formData.append('fotos', fotos[i]);
-            }
+            btn.innerText = 'Subiendo Imágenes...';
 
             try {
-                const res = await fetch(`${API_URL}/upload`, { method: 'POST', body: formData });
+                const urls = await subirASupabase(fileInput.files);
+                btn.innerText = 'Guardando en Base de Datos...';
+
+                const res = await fetch(`${API_URL}/upload`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tipo, observaciones: obs, fotos: urls })
+                });
+
                 if (res.ok) {
-                    alert('✅ Registro guardado con éxito');
+                    alert('✅ Guardado con éxito');
                     e.target.reset();
-                    cargarRegistros('corte');
+                    cargarRegistros(tipo);
                 }
             } catch (err) {
-                alert('❌ Error al conectar con el servidor');
+                alert('❌ Error: ' + err.message);
             } finally {
                 btn.disabled = false;
-                btn.innerText = 'GUARDAR CORTE';
+                btn.innerText = `GUARDAR ${tipo.toUpperCase()}`;
             }
-        });
+        }
 
-        // 3. Cargar Listado (Hacia abajo)
+        document.getElementById('form-corte').onsubmit = (e) => manejarEnvio(e, 'corte');
+        document.getElementById('form-reposicion').onsubmit = (e) => manejarEnvio(e, 'reposicion');
+
         async function cargarRegistros(tipo) {
-            const contenedor = document.getElementById('lista-cortes');
-            contenedor.innerHTML = '<p class="loading">Cargando historial...</p>';
-
+            const cont = document.getElementById(tipo === 'corte' ? 'lista-cortes' : 'lista-reposicion');
+            cont.innerHTML = '<p>Cargando...</p>';
             try {
                 const res = await fetch(`${API_URL}/registros/${tipo}`);
                 const datos = await res.json();
-
-                contenedor.innerHTML = '<h3>Historial de Cortes</h3>';
-
+                cont.innerHTML = '';
                 datos.forEach(reg => {
                     const card = document.createElement('div');
                     card.className = 'registro-card';
                     card.innerHTML = `
-                    <div class="fotos-grid">
-                        ${reg.fotos.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('')}
-                    </div>
-                    <p><strong>Fecha:</strong> ${new Date(reg.createdAt).toLocaleString()}</p>
-                    <p><strong>Obs:</strong> ${reg.observaciones || 'Sin notas'}</p>
-                    <button class="btn-delete" onclick="eliminarRegistro(${reg.id})">🗑️ Eliminar fotos</button>
-                `;
-                    contenedor.appendChild(card);
+                        <div class="fotos-grid">
+                            ${reg.fotos.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('')}
+                        </div>
+                        <p><small>${new Date(reg.createdAt).toLocaleString()}</small></p>
+                        <p>${reg.observaciones || ''}</p>
+                        <button class="btn-delete" onclick="eliminarRegistro(${reg.id}, '${tipo}')">🗑️ Eliminar</button>
+                    `;
+                    cont.appendChild(card);
                 });
-            } catch (err) {
-                contenedor.innerHTML = '<p>Error al cargar historial.</p>';
-            }
+            } catch (e) { cont.innerHTML = 'Error al cargar.'; }
         }
 
-        // 4. Eliminar Registro
-        async function eliminarRegistro(id) {
-            if (!confirm('¿Seguro que quieres eliminar este grupo de fotos?')) return;
-
-            try {
-                const res = await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
-                if (res.ok) cargarRegistros('corte');
-            } catch (err) {
-                alert('No se pudo eliminar');
-            }
+        async function eliminarRegistro(id, tipo) {
+            if (!confirm('¿Eliminar?')) return;
+            await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
+            cargarRegistros(tipo);
         }
 
-        // Cargar datos al iniciar
         window.onload = () => cargarRegistros('corte');
-
     </script>
-
 </body>
 
 </html>
