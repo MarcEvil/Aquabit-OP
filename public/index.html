@@ -71,24 +71,49 @@
             font-weight: bold;
         }
 
+        /* Contenedor de Vista Previa */
         .preview-container {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             overflow-x: auto;
             margin: 10px 0;
             padding: 10px;
-            min-height: 110px;
+            min-height: 140px;
             border: 2px dashed #ccc;
             border-radius: 8px;
             background: #fafafa;
+        }
+
+        /* Item de Vista Previa con Checkbox */
+        .preview-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+            background: white;
+            padding: 5px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
         }
 
         .preview-item img {
             width: 90px;
             height: 90px;
             object-fit: cover;
-            border-radius: 8px;
-            border: 2px solid var(--primary);
+            border-radius: 5px;
+        }
+
+        .preview-item label {
+            font-size: 10px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        .preview-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
         }
 
         textarea {
@@ -98,18 +123,6 @@
             border-radius: 8px;
             box-sizing: border-box;
             margin-top: 10px;
-            font-size: 14px;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 15px 0;
-            background: #f0fdf4;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #bbf7d0;
         }
 
         .submit-btn {
@@ -124,7 +137,7 @@
             font-weight: bold;
         }
 
-        /* Estilos del Historial */
+        /* Historial */
         .historial-section {
             margin-top: 30px;
             border-top: 2px solid #eee;
@@ -137,7 +150,6 @@
             padding: 15px;
             border-radius: 12px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .fotos-grid {
@@ -155,21 +167,14 @@
         }
 
         .btn-delete {
-            background: none;
             color: var(--danger);
             border: 1px solid var(--danger);
-            padding: 6px 12px;
-            border-radius: 6px;
+            background: none;
+            padding: 5px 10px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 11px;
             margin-top: 10px;
-            font-weight: bold;
-        }
-
-        .loading-text {
-            text-align: center;
-            color: #666;
-            font-style: italic;
         }
     </style>
 </head>
@@ -189,11 +194,11 @@
                 (CORTE)</button>
             <input type="file" id="input-corte" accept="image/*" capture="environment" multiple style="display:none">
             <div id="preview-corte" class="preview-container"></div>
-            <textarea id="obs-corte" placeholder="Notas del corte..."></textarea>
+            <textarea id="obs-corte" placeholder="Notas de corte..."></textarea>
             <button id="btn-save-corte" class="submit-btn" onclick="enviarDatos('corte')">GUARDAR CORTE</button>
 
             <div class="historial-section">
-                <h3>Historial de Cortes</h3>
+                <h3>Historial Cortes</h3>
                 <div id="lista-corte"></div>
             </div>
         </div>
@@ -202,11 +207,8 @@
             <button class="btn-cam" onclick="document.getElementById('input-repo').click()">📸 TOMAR FOTO
                 (REPO)</button>
             <input type="file" id="input-repo" accept="image/*" capture="environment" multiple style="display:none">
-            <div id="preview-repo" class="preview-container"></div>
 
-            <div class="checkbox-group">
-                <input type="checkbox" id="check-repo">
-                <label for="check-repo"><strong>Servicio verificado en terreno</strong></label>
+            <div id="preview-repo" class="preview-container">
             </div>
 
             <textarea id="obs-repo" placeholder="Notas de reposición..."></textarea>
@@ -214,7 +216,7 @@
                 REPOSICIÓN</button>
 
             <div class="historial-section">
-                <h3>Historial de Reposiciones</h3>
+                <h3>Historial Reposiciones</h3>
                 <div id="lista-reposicion"></div>
             </div>
         </div>
@@ -226,8 +228,9 @@
         const API_URL = 'https://aquabit-op.onrender.com/api';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let fotosCorte = [];
-        let fotosRepo = [];
+        // Almacenamos objetos { file: Binario, verificado: boolean }
+        let dataCorte = [];
+        let dataRepo = [];
 
         function cambiarTab(tipo) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -237,110 +240,120 @@
             cargarHistorial(tipo);
         }
 
-        function configurarInput(inputId, storageArray, previewId) {
+        // Manejador de entrada de archivos mejorado
+        function configurarCaptura(inputId, dataArray, previewId, conCheckbox) {
             document.getElementById(inputId).onchange = function (e) {
                 const files = Array.from(e.target.files);
-                files.forEach(file => {
-                    storageArray.push(file);
+                const container = document.getElementById(previewId);
+
+                files.forEach((file, index) => {
+                    // Creamos una referencia única para este archivo
+                    const itemData = { file: file, verificado: false };
+                    dataArray.push(itemData);
+
                     const reader = new FileReader();
                     reader.onload = (ev) => {
                         const div = document.createElement('div');
                         div.className = 'preview-item';
-                        div.innerHTML = `<img src="${ev.target.result}">`;
-                        document.getElementById(previewId).appendChild(div);
+
+                        let html = `<img src="${ev.target.result}">`;
+
+                        if (conCheckbox) {
+                            html += `
+                                <label>VERIFICADO</label>
+                                <input type="checkbox" onchange="actualizarVerificacion('${previewId}', ${dataArray.indexOf(itemData)}, this.checked)">
+                            `;
+                        }
+
+                        div.innerHTML = html;
+                        container.appendChild(div);
                     };
                     reader.readAsDataURL(file);
                 });
             };
         }
 
-        configurarInput('input-corte', fotosCorte, 'preview-corte');
-        configurarInput('input-repo', fotosRepo, 'preview-repo');
-
-        async function cargarHistorial(tipo) {
-            const contenedor = document.getElementById(tipo === 'corte' ? 'lista-corte' : 'lista-reposicion');
-            contenedor.innerHTML = '<p class="loading-text">Cargando registros...</p>';
-
-            try {
-                const res = await fetch(`${API_URL}/registros/${tipo}`);
-                const datos = await res.json();
-                contenedor.innerHTML = '';
-
-                datos.forEach(reg => {
-                    const card = document.createElement('div');
-                    card.className = 'registro-card';
-                    card.innerHTML = `
-                        <div class="fotos-grid">
-                            ${reg.fotos.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('')}
-                        </div>
-                        <p><strong>Fecha:</strong> ${new Date(reg.createdAt).toLocaleString()}</p>
-                        <p><strong>Obs:</strong> ${reg.observaciones || 'Sin notas'}</p>
-                        <button class="btn-delete" onclick="eliminarRegistro(${reg.id}, '${tipo}')">🗑️ ELIMINAR</button>
-                    `;
-                    contenedor.appendChild(card);
-                });
-            } catch (err) {
-                contenedor.innerHTML = '<p>Error al cargar el historial.</p>';
+        function actualizarVerificacion(previewId, index, isChecked) {
+            if (previewId === 'preview-repo') {
+                dataRepo[index].verificado = isChecked;
             }
         }
 
-        async function eliminarRegistro(id, tipo) {
-            if (!confirm('¿Seguro que quieres eliminar este registro?')) return;
-            try {
-                const res = await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
-                if (res.ok) {
-                    alert("Registro eliminado");
-                    cargarHistorial(tipo);
-                }
-            } catch (err) { alert("No se pudo eliminar"); }
-        }
+        configurarCaptura('input-corte', dataCorte, 'preview-corte', false);
+        configurarCaptura('input-repo', dataRepo, 'preview-repo', true);
 
         async function enviarDatos(tipo) {
             const btn = document.getElementById(tipo === 'corte' ? 'btn-save-corte' : 'btn-save-repo');
-            const files = tipo === 'corte' ? fotosCorte : fotosRepo;
-            const obs = document.getElementById(tipo === 'corte' ? 'obs-corte' : 'obs-repo').value;
-            const check = tipo === 'reposicion' ? document.getElementById('check-repo').checked : false;
+            const dataList = tipo === 'corte' ? dataCorte : dataRepo;
+            let obs = document.getElementById(tipo === 'corte' ? 'obs-corte' : 'obs-repo').value;
 
-            if (files.length === 0) return alert("Captura al menos una foto");
+            if (dataList.length === 0) return alert("Captura fotos");
 
             btn.disabled = true;
-            btn.innerText = "SUBIENDO IMÁGENES...";
+            btn.innerText = "SUBIENDO...";
 
             try {
                 const urls = [];
-                for (let file of files) {
+                let contadorVerificadas = 0;
+
+                for (let item of dataList) {
                     const name = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
-                    const { error } = await supabaseClient.storage.from('fotos-aquabit').upload(name, file);
+                    const { error } = await supabaseClient.storage.from('fotos-aquabit').upload(name, item.file);
                     if (error) throw error;
+
                     const { data: { publicUrl } } = supabaseClient.storage.from('fotos-aquabit').getPublicUrl(name);
                     urls.push(publicUrl);
+
+                    if (item.verificado) contadorVerificadas++;
+                }
+
+                // Si hay imágenes marcadas, lo añadimos a la nota
+                if (contadorVerificadas > 0) {
+                    obs = `[${contadorVerificadas} FOTO(S) VERIFICADA(S)] ` + obs;
                 }
 
                 await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        tipo,
-                        observaciones: check ? "[VERIFICADO] " + obs : obs,
-                        fotos: urls
-                    })
+                    body: JSON.stringify({ tipo, observaciones: obs, fotos: urls })
                 });
 
-                alert("✅ Guardado con éxito");
-                // Limpiamos los arreglos y la vista previa sin recargar toda la página
-                if (tipo === 'corte') fotosCorte = []; else fotosRepo = [];
-                document.getElementById(tipo === 'corte' ? 'preview-corte' : 'preview-repo').innerHTML = '';
-                document.getElementById(tipo === 'corte' ? 'obs-corte' : 'obs-repo').value = '';
-                btn.disabled = false;
-                btn.innerText = `GUARDAR ${tipo.toUpperCase()}`;
-                cargarHistorial(tipo);
+                alert("✅ Éxito");
+                location.reload();
             } catch (err) {
                 alert("Error: " + err.message);
                 btn.disabled = false;
             }
         }
 
-        // Carga inicial
+        async function cargarHistorial(tipo) {
+            const cont = document.getElementById(tipo === 'corte' ? 'lista-corte' : 'lista-reposicion');
+            cont.innerHTML = '...';
+            try {
+                const res = await fetch(`${API_URL}/registros/${tipo}`);
+                const datos = await res.json();
+                cont.innerHTML = '';
+                datos.forEach(reg => {
+                    const div = document.createElement('div');
+                    div.className = 'registro-card';
+                    div.innerHTML = `
+                        <div class="fotos-grid">${reg.fotos.map(u => `<img src="${u}">`).join('')}</div>
+                        <p><small>${new Date(reg.createdAt).toLocaleString()}</small></p>
+                        <p>${reg.observaciones || ''}</p>
+                        <button class="btn-delete" onclick="eliminarReg(${reg.id}, '${tipo}')">ELIMINAR</button>
+                    `;
+                    cont.appendChild(div);
+                });
+            } catch (e) { }
+        }
+
+        async function eliminarReg(id, tipo) {
+            if (confirm('¿Eliminar?')) {
+                await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
+                cargarHistorial(tipo);
+            }
+        }
+
         window.onload = () => cargarHistorial('corte');
     </script>
 </body>
