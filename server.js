@@ -6,117 +6,72 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Middleware
 app.use(cors());
-app.use(express.json({ limit: '50mb' })); // Aumentamos el límite para recibir múltiples URLs
+app.use(express.json({ limit: '50mb' }));
 app.use(express.static('public'));
 
-// 1. Conexión a PostgreSQL (Render)
-// Asegúrate de tener la variable DATABASE_URL configurada en el Dashboard de Render
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
     logging: false,
-    dialectOptions: {
-        ssl: {
-            require: true,
-            rejectUnauthorized: false
-        }
-    }
+    dialectOptions: { ssl: { require: true, rejectUnauthorized: false } }
 });
 
-// 2. Modelo de Datos "Registro"
-// Estructura optimizada para guardar objetos de fotos {url, verificado}
 const Registro = sequelize.define('Registro', {
-    tipo: {
-        type: DataTypes.STRING, // 'corte' o 'reposicion'
-        allowNull: false
-    },
-    observaciones: {
-        type: DataTypes.TEXT,
-        allowNull: true
-    },
-    fotos: {
-        type: DataTypes.JSON, // Almacena el array de objetos: [{url, verificado}, ...]
-        allowNull: false,
-        defaultValue: []
-    }
-}, {
-    tableName: 'Registros',
-    timestamps: true // Esto genera createdAt automáticamente
-});
+    tipo: { type: DataTypes.STRING, allowNull: false },
+    observaciones: { type: DataTypes.TEXT },
+    fotos: { type: DataTypes.JSON, allowNull: false, defaultValue: [] }
+}, { timestamps: true });
 
-// 3. Endpoints de la API
-
-// GET: Obtener historial persistente por tipo
+// Obtener historial
 app.get('/api/registros/:tipo', async (req, res) => {
     try {
-        const { tipo } = req.params;
         const registros = await Registro.findAll({
-            where: { tipo },
-            order: [['createdAt', 'DESC']] // Los más recientes primero
+            where: { tipo: req.params.tipo },
+            order: [['createdAt', 'DESC']]
         });
         res.json(registros);
-    } catch (error) {
-        console.error('Error al obtener registros:', error);
-        res.status(500).json({ error: 'Error en la base de datos' });
-    }
+    } catch (e) { res.status(500).send(e.message); }
 });
 
-// POST: Guardar nuevo registro desde terreno
+// Crear registro inicial
 app.post('/api/upload', async (req, res) => {
     try {
-        const { tipo, observaciones, fotos } = req.body;
-
-        const nuevoRegistro = await Registro.create({
-            tipo,
-            observaciones,
-            fotos // Recibe el array con los estados de los checkboxes
-        });
-
-        res.status(201).json({
-            success: true,
-            data: nuevoRegistro
-        });
-    } catch (error) {
-        console.error('Error al guardar:', error);
-        res.status(500).json({ error: 'No se pudo guardar el registro' });
-    }
+        const nuevo = await Registro.create(req.body);
+        res.status(201).json(nuevo);
+    } catch (e) { res.status(500).send(e.message); }
 });
 
-// DELETE: Eliminar registro (Botón de basurero en el historial)
+// ACTUALIZACIÓN INDIVIDUAL: Marcar una foto específica como repuesto
+app.patch('/api/registros/:id/foto/:index', async (req, res) => {
+    try {
+        const { id, index } = req.params;
+        const reg = await Registro.findByPk(id);
+        if (!reg) return res.status(404).send("No encontrado");
+
+        let fotosUpdate = [...reg.fotos];
+        // Normalizamos a objeto si era string, y marcamos verificado
+        if (typeof fotosUpdate[index] === 'string') {
+            fotosUpdate[index] = { url: fotosUpdate[index], verificado: true };
+        } else {
+            fotosUpdate[index] = { ...fotosUpdate[index], verificado: true };
+        }
+
+        reg.fotos = fotosUpdate;
+        await reg.save();
+        res.json(reg);
+    } catch (e) { res.status(500).send(e.message); }
+});
+
+// Eliminar registro
 app.delete('/api/registros/:id', async (req, res) => {
     try {
-        const { id } = req.params;
-        const borrado = await Registro.destroy({ where: { id } });
-
-        if (borrado) {
-            res.json({ success: true, message: 'Registro eliminado' });
-        } else {
-            res.status(404).json({ error: 'Registro no encontrado' });
-        }
-    } catch (error) {
-        console.error('Error al eliminar:', error);
-        res.status(500).json({ error: 'Error al intentar eliminar' });
-    }
+        await Registro.destroy({ where: { id: req.params.id } });
+        res.json({ success: true });
+    } catch (e) { res.status(500).send(e.message); }
 });
 
-// 4. Inicialización del Sistema
-async function iniciarApp() {
-    try {
-        // Verificar conexión
-        await sequelize.authenticate();
-        console.log('✅ Base de Datos PostgreSQL: Conectada');
-
-        // Sincronizar modelos (Crea o actualiza la tabla en Render)
-        await sequelize.sync();
-        console.log('✅ Tablas de AquaBit sincronizadas');
-
-        app.listen(PORT, () => {
-            console.log(`🚀 Servidor AquaBit OP en puerto ${PORT}`);
-        });
-    } catch (error) {
-        console.error('❌ Error crítico al iniciar el servidor:', error);
-    }
+async function start() {
+    await sequelize.sync();
+    app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
 }
-
-iniciarApp();
+start();

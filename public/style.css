@@ -139,3 +139,20 @@ header {
         max-width: 800px;
     }
 }
+
+.btn-accion-repuesto {
+    margin-top: 5px;
+    background: white;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    padding: 5px;
+    border-radius: 5px;
+    font-size: 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-accion-repuesto:active {
+    background: var(--primary);
+    color: white;
+}
