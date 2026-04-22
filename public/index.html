@@ -3,103 +3,96 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AquaBit OP - Gestión v2.5</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaBit OP - Esencial</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at top right, #111827, #000000);
-            min-height: 100vh;
+            font-family: sans-serif;
+            padding: 20px;
+            line-height: 1.5;
+            color: #333;
         }
 
-        .glass {
-            background: rgba(31, 41, 55, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        .section {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
         }
 
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
+        .preview-container {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            overflow-x: auto;
         }
 
-        .btn-transition {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .preview-img {
+            width: 100px;
+            height: 100px;
+            object-cover: cover;
+            border: 1px solid #000;
+        }
+
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+            background: #0052cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        button:disabled {
+            background: #ccc;
+        }
+
+        textarea {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .historial-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
         }
     </style>
 </head>
 
-<body class="text-gray-100 antialiased">
+<body>
 
-    <header class="sticky top-0 z-50 glass border-b border-white/10 p-4 mb-6">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <div>
-                <h1
-                    class="font-extrabold text-2xl tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
-                    AQUABIT <span class="font-light text-white">OP</span>
-                </h1>
-                <p class="text-[9px] text-blue-400/80 tracking-[0.2em] font-bold uppercase">Gestión de Suministros v2.5
-                </p>
-            </div>
-            <div class="flex items-center gap-2 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
-                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                <span class="text-[10px] font-bold text-green-500 uppercase">Sistema Online</span>
-            </div>
-        </div>
-    </header>
+    <h1>AquaBit OP - Panel de Terreno</h1>
 
-    <main class="max-w-4xl mx-auto px-4 pb-24">
-        <div class="flex gap-2 mb-8 bg-black/40 p-1.5 rounded-2xl border border-white/5">
-            <button onclick="setTipo('corte')" id="btn-corte"
-                class="btn-transition flex-1 py-3 rounded-xl font-bold text-sm tracking-wide uppercase">Orden de
-                Corte</button>
-            <button onclick="setTipo('reposicion')" id="btn-repo"
-                class="btn-transition flex-1 py-3 rounded-xl font-bold text-sm tracking-wide uppercase">Reposición</button>
+    <div class="section">
+        <strong>Modo Actual:</strong>
+        <button onclick="setTipo('corte')">Corte</button>
+        <button onclick="setTipo('reposicion')">Reposición</button>
+        <p>Seleccionado: <b id="labelTipo">CORTE</b></p>
+    </div>
+
+    <div class="section">
+        <h3>Nuevo Registro</h3>
+
+        <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none"
+            onchange="procesarFoto()">
+        <button onclick="document.getElementById('fotoInput').click()">📸 CAPTURAR FOTO</button>
+
+        <div id="listaFotos" class="preview-container">
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <section>
-                <div class="glass p-6 rounded-[2.5rem] shadow-2xl border border-white/10 sticky top-24">
-                    <h3 class="text-sm font-bold text-gray-400 mb-4 flex items-center gap-2 uppercase tracking-widest">
-                        <span class="w-1 h-4 bg-blue-500 rounded-full"></span> Nuevo Registro
-                    </h3>
+        <label>Observaciones:</label><br>
+        <textarea id="obs" rows="4"></textarea>
 
-                    <input type="file" id="fotoInput" accept="image/*" capture="environment" class="hidden"
-                        onchange="procesarFoto()">
+        <button id="btnEnviar" onclick="enviarRegistro()" style="background: #00875a; width: 100%; font-weight: bold;">
+            SINCRONIZAR AHORA
+        </button>
+    </div>
 
-                    <button onclick="document.getElementById('fotoInput').click()"
-                        class="group w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 p-6 rounded-3xl mb-4 font-bold flex flex-col items-center justify-center gap-2 btn-transition shadow-lg border border-white/10">
-                        <span class="text-3xl">📸</span>
-                        <span id="txtBtnCamara" class="text-xs uppercase tracking-widest text-center">Tomar Fotos (Mín.
-                            3)</span>
-                    </button>
-
-                    <div id="listaFotos" class="flex gap-3 overflow-x-auto mb-6 scrollbar-hide py-2 min-h-[90px]"></div>
-
-                    <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Observaciones de
-                        Campo</label>
-                    <textarea id="obs" placeholder="Ej: Medidor con sello roto..."
-                        class="w-full p-4 bg-black/30 border border-white/5 rounded-2xl mb-6 h-32 text-white text-sm outline-none focus:border-blue-500/50 transition-all placeholder:text-gray-700"></textarea>
-
-                    <button id="btnEnviar" onclick="enviarRegistro()"
-                        class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 p-5 rounded-2xl font-black text-sm tracking-widest uppercase disabled:opacity-30 btn-transition shadow-xl">
-                        Sincronizar Datos
-                    </button>
-                </div>
-            </section>
-
-            <section>
-                <div class="flex items-center justify-between mb-4 px-2 uppercase">
-                    <h2 class="font-extrabold text-lg tracking-tight">Historial <span id="labelTipo"
-                            class="text-blue-400">CORTE</span></h2>
-                    <span class="text-[10px] text-gray-500 font-mono font-bold" id="countLabel">0 Registros</span>
-                </div>
-                <div id="historialContenedor" class="space-y-4"></div>
-            </section>
-        </div>
-    </main>
+    <div class="section">
+        <h3>Historial Local (<span id="countLabel">0</span>)</h3>
+        <div id="historialContenedor"></div>
+    </div>
 
     <script>
         const SUPABASE_URL = 'https://mjxpqxyxkshtqlptccto.supabase.co';
@@ -108,23 +101,17 @@
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let tipoActual = 'corte';
-        let fotosParaSubir = [];
+        let fotosParaSubir = []; // Almacena archivos reales (File)
 
         function setTipo(t) {
             tipoActual = t;
             fotosParaSubir = [];
             document.getElementById('listaFotos').innerHTML = '';
-            document.getElementById('obs').value = '';
             document.getElementById('labelTipo').innerText = t.toUpperCase();
-            document.getElementById('txtBtnCamara').innerText = t === 'corte' ? 'Tomar Fotos (Mín. 3)' : 'Tomar Foto (Mín. 1)';
-
-            const isCorte = t === 'corte';
-            document.getElementById('btn-corte').className = isCorte ? 'btn-transition flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-900/40' : 'btn-transition flex-1 py-3 rounded-xl bg-transparent text-gray-500 font-bold hover:text-gray-300';
-            document.getElementById('btn-repo').className = !isCorte ? 'btn-transition flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-900/40' : 'btn-transition flex-1 py-3 rounded-xl bg-transparent text-gray-500 font-bold hover:text-gray-300';
-
             cargarHistorial();
         }
 
+        // Recupera la vista previa y mantiene el archivo real en memoria
         function procesarFoto() {
             const input = document.getElementById('fotoInput');
             const lista = document.getElementById('listaFotos');
@@ -133,77 +120,33 @@
                 const file = input.files;
                 fotosParaSubir.push(file);
 
-                const wrapper = document.createElement('div');
-                wrapper.className = "relative flex-shrink-0";
-
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
-                img.className = "h-20 w-20 object-cover rounded-2xl border-2 border-blue-500/50 shadow-md";
+                img.className = "preview-img";
+                lista.appendChild(img);
 
-                const btnBorrar = document.createElement('button');
-                btnBorrar.innerHTML = "✕";
-                btnBorrar.className = "absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 text-[10px] font-bold border border-white/20 shadow-lg";
-                btnBorrar.onclick = () => {
-                    wrapper.remove();
-                    fotosParaSubir = fotosParaSubir.filter(f => f !== file);
-                };
-
-                wrapper.appendChild(img);
-                wrapper.appendChild(btnBorrar);
-                lista.appendChild(wrapper);
-                input.value = "";
+                input.value = ""; // Limpiar para permitir otra foto
             }
         }
 
-        async function cargarHistorial() {
-            const listado = document.getElementById('historialContenedor');
-            try {
-                const res = await fetch(`${API_URL}/registros/${tipoActual}`);
-                const data = await res.json();
-                document.getElementById('countLabel').innerText = `${data.length} REGISTROS`;
-                listado.innerHTML = data.length === 0 ? '<div class="glass p-10 rounded-3xl text-center text-gray-600 text-xs font-bold uppercase italic">Sin registros previos</div>' : '';
-
-                data.forEach(reg => {
-                    const card = document.createElement('div');
-                    card.className = 'glass p-5 rounded-[2rem] border-l-4 ' + (tipoActual === 'corte' ? 'border-blue-500' : 'border-emerald-500') + ' shadow-lg mb-4';
-                    card.innerHTML = `
-                        <div class="flex justify-between items-center mb-4">
-                            <span class="text-[9px] text-gray-500 font-black uppercase bg-black/30 px-2 py-1 rounded-md italic">
-                                ${new Date(reg.createdAt).toLocaleString()}
-                            </span>
-                            <button onclick="eliminarRegistro(${reg.id})" class="text-red-500 text-[9px] font-black uppercase tracking-widest hover:text-red-400">Eliminar</button>
-                        </div>
-                        <p class="text-gray-300 text-sm mb-4 leading-relaxed italic">"${reg.observaciones || 'Sin notas.'}"</p>
-                        <div class="flex gap-2 overflow-x-auto scrollbar-hide py-1">
-                            ${reg.fotos.map(url => `<img src="${url}" class="h-20 w-20 object-cover rounded-xl border border-white/5">`).join('')}
-                        </div>`;
-                    listado.appendChild(card);
-                });
-            } catch (err) { console.error(err); }
-        }
-
         async function enviarRegistro() {
-            if (fotosParaSubir.length === 0) return alert("Falta evidencia visual.");
-            if (tipoActual === 'corte' && fotosParaSubir.length < 3) return alert("Protocolo de Corte requiere 3 fotos.");
+            if (fotosParaSubir.length === 0) return alert("Saca fotos primero.");
 
             const btn = document.getElementById('btnEnviar');
             btn.disabled = true;
-            btn.innerText = "⚡ SUBIENDO BINARIOS...";
+            btn.innerText = "Subiendo imágenes...";
 
             try {
                 const urlsFinales = [];
                 for (let file of fotosParaSubir) {
                     const fileName = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 4)}.jpg`;
 
-                    // SUBIDA BLINDADA: Enviamos el binario real
+                    // Subida binaria directa
                     const { data, error } = await supabaseClient.storage
                         .from('fotos-aquabit')
-                        .upload(fileName, file, {
-                            contentType: 'image/jpeg',
-                            upsert: false
-                        });
+                        .upload(fileName, file, { contentType: 'image/jpeg' });
 
-                    if (error) throw new Error("Supabase Storage: " + error.message);
+                    if (error) throw error;
 
                     const { data: { publicUrl } } = supabaseClient.storage
                         .from('fotos-aquabit')
@@ -212,7 +155,7 @@
                     urlsFinales.push(publicUrl);
                 }
 
-                btn.innerText = "💾 SINCRONIZANDO...";
+                btn.innerText = "Guardando datos...";
                 const res = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -224,20 +167,35 @@
                 });
 
                 if (res.ok) {
-                    alert("✅ Registro exitoso.");
+                    alert("✅ Guardado");
                     location.reload();
                 }
             } catch (err) {
-                alert("ERROR: " + err.message);
+                alert("Error: " + err.message);
                 btn.disabled = false;
-                btn.innerText = "SINCRONIZAR DATOS";
+                btn.innerText = "SINCRONIZAR AHORA";
             }
         }
 
-        async function eliminarRegistro(id) {
-            if (!confirm('¿Eliminar registro?')) return;
-            await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
-            cargarHistorial();
+        async function cargarHistorial() {
+            const listado = document.getElementById('historialContenedor');
+            try {
+                const res = await fetch(`${API_URL}/registros/${tipoActual}`);
+                const data = await res.json();
+                document.getElementById('countLabel').innerText = data.length;
+                listado.innerHTML = "";
+
+                data.forEach(reg => {
+                    const item = document.createElement('div');
+                    item.className = 'historial-item';
+                    item.innerHTML = `
+                        <small>${new Date(reg.createdAt).toLocaleString()}</small><br>
+                        <b>${reg.observaciones || 'Sin obs.'}</b><br>
+                        ${reg.fotos.map(url => `<img src="${url}" width="50">`).join(' ')}
+                    `;
+                    listado.appendChild(item);
+                });
+            } catch (e) { }
         }
 
         setTipo('corte');
