@@ -258,22 +258,33 @@
                 data.forEach(reg => {
                     const card = document.createElement('div');
                     card.className = 'registro-card';
+
+                    // CORRECCIÓN CLAVE: Acceder a f.url en lugar de f directamente
+                    const fotosHtml = reg.fotos.map(f => {
+                        // Verificamos si f es objeto (nuevo formato) o string (formato antiguo)
+                        const urlImg = (typeof f === 'object') ? f.url : f;
+                        const esVerificado = (typeof f === 'object' && f.verificado);
+
+                        return `
+                    <div class="foto-item">
+                        <img src="${urlImg}" onerror="this.src='https://via.placeholder.com/100?text=Error'" onclick="window.open('${urlImg}')">
+                        ${esVerificado ? '<span style="color:green; font-size:10px; font-weight:bold;">✔️ REPUESTO</span>' : ''}
+                    </div>
+                `;
+                    }).join('');
+
                     card.innerHTML = `
-                        <div class="fotos-grid">
-                            ${reg.fotos.map(f => `
-                                <div class="foto-item">
-                                    <img src="${f.url}" onclick="window.open('${f.url}')">
-                                    ${f.verificado ? '<span style="color:green; font-size:10px; font-weight:bold;">✔️ REPUESTO</span>' : ''}
-                                </div>
-                            `).join('')}
-                        </div>
-                        <p><small>${new Date(reg.createdAt).toLocaleString()}</small></p>
-                        <p>${reg.observaciones || ''}</p>
-                        <button class="btn-delete" onclick="eliminar(${reg.id})">🗑️ ELIMINAR REGISTRO</button>
-                    `;
+                <div class="fotos-grid">${fotosHtml}</div>
+                <p><small>${new Date(reg.createdAt).toLocaleString()}</small></p>
+                <p>${reg.observaciones || ''}</p>
+                <button class="btn-delete" onclick="eliminar(${reg.id})">🗑️ ELIMINAR REGISTRO</button>
+            `;
                     lista.appendChild(card);
                 });
-            } catch (e) { lista.innerHTML = 'Error de red.'; }
+            } catch (e) {
+                console.error(e);
+                lista.innerHTML = 'Error de red.';
+            }
         }
 
         async function eliminar(id) {
