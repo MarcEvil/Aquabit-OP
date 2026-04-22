@@ -1,87 +1,86 @@
 const express = require('express');
-const { Sequelize, DataTypes } = require('sequelize');
 const cors = require('cors');
-require('dotenv').config();
+const { Pool } = require('pg');
+const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3000;
 
-// Configuración de CORS para permitir peticiones desde cualquier origen (móviles/web)
+// 1. CONFIGURACIÓN DE SEGURIDAD Y LÍMITES
+// Aumentamos el límite a 50mb para que el JSON con muchas URLs no sea rechazado
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
-app.use(express.static('public'));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Conexión a Base de Datos con SSL obligatorio para Supabase
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: 'postgres',
-    logging: false,
-    dialectOptions: {
-        ssl: {
-            require: true,
-            rejectUnauthorized: false
-        }
-    }
+// 2. CONEXIÓN A LA BASE DE DATOS (PostgreSQL en Render)
+const pool = new Pool({
+    connectionString: "postgresql://aquabit_db_user:mZ7X8hY76U6S5r6T9p8Q@ep-blue-cloud-a5x8j9k0.us-east-2.aws.neon.tech/aquabit_db?sslmode=require",
 });
 
-// Modelo exacto (Nota la R mayúscula en Registros para que coincida con tu DB)
-// --- DEFINICIÓN DEL MODELO ---
-const Registro = sequelize.define('Registro', {
-    tipo: { type: DataTypes.STRING, allowNull: false },
-    observaciones: { type: DataTypes.TEXT, allowNull: true },
-    fotos: { type: DataTypes.JSON, allowNull: false }
-}, {
-    tableName: 'Registros', // <--- ESTO ES VITAL: Debe ser idéntico a tu imagen
-    timestamps: true,      // Sequelize buscará createdAt y updatedAt automáticamente
-    freezeTableName: true  // Evita que Sequelize intente pluralizar el nombre
+// Probar conexión inicial
+pool.connect((err, client, release) => {
+    if (err) return console.error('❌ Error de conexión a la DB:', err.stack);
+    console.log('✅ Conectado a PostgreSQL en Render');
+    release();
 });
 
-// Rutas de la API
+// 3. RUTAS DE LA API
+
+// Obtener registros por tipo (Corte o Reposición)
 app.get('/api/registros/:tipo', async (req, res) => {
     try {
         const { tipo } = req.params;
-        const registros = await Registro.findAll({
-            where: { tipo },
-            order: [['createdAt', 'DESC']]
-        });
-        res.json(registros);
-    } catch (error) {
-        console.error('Error GET:', error.message);
-        res.status(500).json({ error: 'Error al obtener historial', detalle: error.message });
+        const result = await pool.query(
+            'SELECT * FROM registros WHERE tipo = $1 ORDER BY "createdAt" DESC',
+            [tipo]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error al obtener datos' });
     }
 });
 
+// Guardar nuevo registro
 app.post('/api/upload', async (req, res) => {
+    const { tipo, observaciones, fotos } = req.body;
+
+    if (!tipo || !fotos || fotos.length === 0) {
+        return res.status(400).json({ error: 'Faltan datos obligatorios' });
+    }
+
     try {
-        const { tipo, observaciones, fotos } = req.body;
-        const nuevo = await Registro.create({ tipo, observaciones, fotos });
-        res.json({ success: true, data: nuevo });
-    } catch (error) {
-        console.error('Error POST:', error.message);
-        res.status(500).json({ error: 'Error al guardar', detalle: error.message });
+        const query = 'INSERT INTO registros (tipo, observaciones, fotos, "createdAt") VALUES ($1, $2, $3, NOW()) RETURNING *';
+        const values = [tipo, observaciones, fotos];
+        const result = await pool.query(query, values);
+
+        console.log(`✅ Nuevo registro guardado: ${tipo}`);
+        res.status(201).json(result.rows);
+    } catch (err) {
+        console.error('❌ Error al guardar:', err);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
+// Eliminar un registro
 app.delete('/api/registros/:id', async (req, res) => {
     try {
-        await Registro.destroy({ where: { id: req.params.id } });
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al eliminar', detalle: error.message });
+        const { id } = req.params;
+        await pool.query('DELETE FROM registros WHERE id = $1', [id]);
+        res.json({ message: 'Registro eliminado' });
+    } catch (err) {
+        res.status(500).json({ error: 'Error al eliminar' });
     }
 });
 
-// Sincronización e Inicio
-async function startServer() {
-    try {
-        await sequelize.authenticate();
-        console.log('✅ Base de Datos Conectada.');
-        await sequelize.sync(); // Esto no borra datos, solo asegura que el modelo exista
-        app.listen(PORT, () => {
-            console.log(`🚀 AquaBit OP listo en puerto ${PORT}`);
-        });
-    } catch (error) {
-        console.error('❌ Fallo total de conexión:', error);
-    }
-}
+// 4. SERVIR ARCHIVOS ESTÁTICOS (Frontend)
+app.use(express.static(path.join(__dirname, 'public')));
 
-startServer();
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// 5. INICIO DEL SERVIDOR
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor AquaBit OP corriendo en puerto ${PORT}`);
+});
