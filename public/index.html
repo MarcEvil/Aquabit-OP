@@ -77,6 +77,18 @@
             box-sizing: border-box;
         }
 
+        .btn-cam {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            width: 100%;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
         button.submit-btn {
             width: 100%;
             padding: 15px;
@@ -115,15 +127,19 @@
             border: 1px solid #ddd;
         }
 
-        .btn-delete {
-            background: none;
-            color: var(--danger);
-            border: 1px solid var(--danger);
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            margin-top: 10px;
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            background: #f9fafb;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .checkbox-group input {
+            width: 20px;
+            height: 20px;
         }
     </style>
 </head>
@@ -139,8 +155,11 @@
         <div id="panel-corte" class="panel active">
             <form id="form-corte">
                 <div class="form-group">
-                    <label>Fotos (Corte requiere 3)</label>
-                    <input type="file" id="fotos-corte" accept="image/*" multiple required>
+                    <label>Evidencia de Corte (3 fotos)</label>
+                    <button type="button" class="btn-cam" onclick="document.getElementById('fotos-corte').click()">📸
+                        ABRIR CÁMARA</button>
+                    <input type="file" id="fotos-corte" accept="image/*" capture="environment" multiple required
+                        style="display:none">
                 </div>
                 <div class="form-group">
                     <label>Observaciones</label>
@@ -154,9 +173,18 @@
         <div id="panel-reposicion" class="panel">
             <form id="form-reposicion">
                 <div class="form-group">
-                    <label>Fotos Reposición</label>
-                    <input type="file" id="fotos-repo" accept="image/*" multiple>
+                    <label>Evidencia de Reposición</label>
+                    <button type="button" class="btn-cam" onclick="document.getElementById('fotos-repo').click()">📸
+                        ABRIR CÁMARA</button>
+                    <input type="file" id="fotos-repo" accept="image/*" capture="environment" multiple
+                        style="display:none">
                 </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="check-verificado">
+                    <label for="check-verificado" style="margin:0">Servicio verificado en terreno</label>
+                </div>
+
                 <div class="form-group">
                     <label>Observaciones</label>
                     <textarea id="obs-repo" rows="3"></textarea>
@@ -168,16 +196,13 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN (Asegúrate de que sean tus credenciales)
         const SUPABASE_URL = 'https://mjxpqxyxkshtqlptccto.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qeHBxeHl4a3NodHFscHRjY3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MzQyOTAsImV4cCI6MjA5MjMxMDI5MH0.KGi6VT8g-zKeEi0NWHpkdzdKHP1mF11Ch0Q-46c2Wps';
         const API_URL = 'https://aquabit-op.onrender.com/api';
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        let currentTab = 'corte';
 
         function switchTab(tab) {
-            currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             event.target.classList.add('active');
@@ -192,7 +217,6 @@
                 const { data, error } = await supabaseClient.storage
                     .from('fotos-aquabit')
                     .upload(fileName, file);
-
                 if (error) throw error;
                 const { data: { publicUrl } } = supabaseClient.storage.from('fotos-aquabit').getPublicUrl(fileName);
                 urls.push(publicUrl);
@@ -202,33 +226,39 @@
 
         async function manejarEnvio(e, tipo) {
             e.preventDefault();
-            const btn = e.target.querySelector('button');
-            const fileInput = document.getElementById(`fotos-${tipo === 'corte' ? 'corte' : 'repo'}`);
-            const obs = document.getElementById(`obs-${tipo === 'corte' ? 'corte' : 'repo'}`).value;
+            const btn = e.target.querySelector('button[type="submit"]');
+            const inputId = tipo === 'corte' ? 'fotos-corte' : 'fotos-repo';
+            const obsId = tipo === 'corte' ? 'obs-corte' : 'obs-repo';
+            const fileInput = document.getElementById(inputId);
+            const obsValue = document.getElementById(obsId).value;
 
-            if (tipo === 'corte' && fileInput.files.length !== 3) return alert("Corte requiere 3 fotos.");
-            if (fileInput.files.length === 0) return alert("Selecciona fotos.");
+            // Lógica extra para el checkbox de reposición
+            let finalObs = obsValue;
+            if (tipo === 'reposicion' && document.getElementById('check-verificado').checked) {
+                finalObs = "[VERIFICADO] " + obsValue;
+            }
+
+            if (tipo === 'corte' && fileInput.files.length !== 3) return alert("Selecciona 3 fotos.");
+            if (fileInput.files.length === 0) return alert("Captura fotos primero.");
 
             btn.disabled = true;
-            btn.innerText = 'Subiendo Imágenes...';
+            btn.innerText = 'Subiendo...';
 
             try {
                 const urls = await subirASupabase(fileInput.files);
-                btn.innerText = 'Guardando en Base de Datos...';
-
                 const res = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tipo, observaciones: obs, fotos: urls })
+                    body: JSON.stringify({ tipo, observaciones: finalObs, fotos: urls })
                 });
 
                 if (res.ok) {
-                    alert('✅ Guardado con éxito');
+                    alert('✅ Éxito');
                     e.target.reset();
                     cargarRegistros(tipo);
                 }
             } catch (err) {
-                alert('❌ Error: ' + err.message);
+                alert('Error: ' + err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerText = `GUARDAR ${tipo.toUpperCase()}`;
@@ -240,7 +270,7 @@
 
         async function cargarRegistros(tipo) {
             const cont = document.getElementById(tipo === 'corte' ? 'lista-cortes' : 'lista-reposicion');
-            cont.innerHTML = '<p>Cargando...</p>';
+            cont.innerHTML = '...';
             try {
                 const res = await fetch(`${API_URL}/registros/${tipo}`);
                 const datos = await res.json();
@@ -249,22 +279,13 @@
                     const card = document.createElement('div');
                     card.className = 'registro-card';
                     card.innerHTML = `
-                        <div class="fotos-grid">
-                            ${reg.fotos.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('')}
-                        </div>
+                        <div class="fotos-grid">${reg.fotos.map(u => `<img src="${u}">`).join('')}</div>
                         <p><small>${new Date(reg.createdAt).toLocaleString()}</small></p>
                         <p>${reg.observaciones || ''}</p>
-                        <button class="btn-delete" onclick="eliminarRegistro(${reg.id}, '${tipo}')">🗑️ Eliminar</button>
                     `;
                     cont.appendChild(card);
                 });
-            } catch (e) { cont.innerHTML = 'Error al cargar.'; }
-        }
-
-        async function eliminarRegistro(id, tipo) {
-            if (!confirm('¿Eliminar?')) return;
-            await fetch(`${API_URL}/registros/${id}`, { method: 'DELETE' });
-            cargarRegistros(tipo);
+            } catch (e) { }
         }
 
         window.onload = () => cargarRegistros('corte');

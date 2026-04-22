@@ -6,21 +6,18 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static('public'));
 
-// 1. CONEXIÓN A BASE DE DATOS
+// CONEXIÓN
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
     logging: false,
-    dialectOptions: {
-        ssl: { require: true, rejectUnauthorized: false }
-    }
+    dialectOptions: { ssl: { require: true, rejectUnauthorized: false } }
 });
 
-// 2. DEFINICIÓN DEL MODELO
+// MODELO
 const Registro = sequelize.define('Registro', {
     tipo: { type: DataTypes.STRING, allowNull: false },
     observaciones: { type: DataTypes.TEXT, allowNull: true },
@@ -31,9 +28,7 @@ const Registro = sequelize.define('Registro', {
     timestamps: true
 });
 
-// 3. RUTAS DE LA API
-
-// GET: Obtener historial
+// RUTAS
 app.get('/api/registros/:tipo', async (req, res) => {
     try {
         const registros = await Registro.findAll({
@@ -46,7 +41,6 @@ app.get('/api/registros/:tipo', async (req, res) => {
     }
 });
 
-// POST: Guardar registro (Espera JSON con URLs)
 app.post('/api/upload', async (req, res) => {
     try {
         const { tipo, observaciones, fotos } = req.body;
@@ -57,7 +51,6 @@ app.post('/api/upload', async (req, res) => {
     }
 });
 
-// DELETE: Eliminar registro (Agregado)
 app.delete('/api/registros/:id', async (req, res) => {
     try {
         await Registro.destroy({ where: { id: req.params.id } });
@@ -67,14 +60,11 @@ app.delete('/api/registros/:id', async (req, res) => {
     }
 });
 
-// 4. INICIO
-async function startServer() {
+async function start() {
     try {
         await sequelize.authenticate();
         await sequelize.sync();
-        app.listen(PORT, () => console.log(`🚀 Servidor en puerto ${PORT}`));
-    } catch (error) {
-        console.error('❌ Error:', error);
-    }
+        app.listen(PORT, () => console.log(`🚀 AquaBit OP en puerto ${PORT}`));
+    } catch (e) { console.error(e); }
 }
-startServer();
+start();
