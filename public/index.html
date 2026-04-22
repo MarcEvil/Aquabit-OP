@@ -59,9 +59,10 @@
     <main class="main-container mx-auto px-4 pb-24">
         <div class="flex gap-2 mb-8 bg-black/40 p-1.5 rounded-2xl border border-white/5">
             <button onclick="setTipo('corte')" id="btn-corte"
-                class="btn-transition flex-1 py-3 rounded-xl font-bold text-sm tracking-wide">ORDEN DE CORTE</button>
+                class="btn-transition flex-1 py-3 rounded-xl font-bold text-sm tracking-wide uppercase">Orden de
+                Corte</button>
             <button onclick="setTipo('reposicion')" id="btn-repo"
-                class="btn-transition flex-1 py-3 rounded-xl font-bold text-sm tracking-wide">REPOSICIÓN</button>
+                class="btn-transition flex-1 py-3 rounded-xl font-bold text-sm tracking-wide uppercase">Reposición</button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -85,7 +86,7 @@
 
                     <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase text-left">Observaciones
                         de Campo</label>
-                    <textarea id="obs" placeholder="Ej: Medidor con sello roto..."
+                    <textarea id="obs" placeholder="Ej: Medidor con sello roto, difícil acceso..."
                         class="w-full p-4 bg-black/30 border border-white/5 rounded-2xl mb-6 h-32 text-white text-sm outline-none focus:border-blue-500/50 transition-all placeholder:text-gray-700"></textarea>
 
                     <button id="btnEnviar" onclick="enviarRegistro()"
@@ -113,7 +114,7 @@
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let tipoActual = 'corte';
-        let fotosParaSubir = [];
+        let fotosParaSubir = []; // Aquí guardaremos los objetos FILE reales
 
         function setTipo(t) {
             tipoActual = t;
@@ -134,14 +135,20 @@
             const input = document.getElementById('fotoInput');
             if (input.files && input.files) {
                 const file = input.files;
-                fotosParaSubir.push(file); // Guardamos el objeto FILE real
+
+                // CRÍTICO: Guardamos el archivo binario real para la subida
+                fotosParaSubir.push(file);
+
                 const wrapper = document.createElement('div');
                 wrapper.className = "relative flex-shrink-0";
                 const img = document.createElement('img');
-                img.src = URL.createObjectURL(file);
+                img.src = URL.createObjectURL(file); // Solo para previsualización local
                 img.className = "h-20 w-20 object-cover rounded-2xl border-2 border-blue-500/50 shadow-md";
                 wrapper.appendChild(img);
                 document.getElementById('listaFotos').appendChild(wrapper);
+
+                // Limpiamos el input para permitir capturas consecutivas
+                input.value = "";
             }
         }
 
@@ -151,23 +158,18 @@
                 const res = await fetch(`${API_URL}/registros/${tipoActual}`);
                 const data = await res.json();
                 document.getElementById('countLabel').innerText = `${data.length} REGISTROS`;
-                listado.innerHTML = data.length === 0 ? '<div class="glass p-10 rounded-3xl text-center text-gray-600 text-xs font-bold tracking-widest uppercase">Bandeja Vacía</div>' : '';
+                listado.innerHTML = data.length === 0 ? '<div class="glass p-10 rounded-3xl text-center text-gray-600 text-xs font-bold tracking-widest uppercase italic">Bandeja de entrada vacía</div>' : '';
 
                 data.forEach(reg => {
                     const card = document.createElement('div');
                     card.className = 'glass p-5 rounded-[2rem] border-l-4 ' + (tipoActual === 'corte' ? 'border-blue-500' : 'border-emerald-500') + ' shadow-lg mb-4';
-                    const isRepo = tipoActual === 'reposicion';
-                    const checkbox = isRepo ? '<input type="checkbox" class="w-6 h-6 mr-3 accent-emerald-500 rounded-lg">' : '';
 
                     card.innerHTML = `
                         <div class="flex justify-between items-center mb-4">
                             <span class="text-[9px] text-gray-500 font-black uppercase tracking-tighter bg-black/30 px-2 py-1 rounded-md italic">
                                 ${new Date(reg.createdAt).toLocaleString()}
                             </span>
-                            <div class="flex items-center gap-2">
-                                ${checkbox}
-                                <button onclick="eliminarRegistro(${reg.id})" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-xl text-[9px] font-black border border-red-500/20 transition-all uppercase tracking-widest">Eliminar</button>
-                            </div>
+                            <button onclick="eliminarRegistro(${reg.id})" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-xl text-[9px] font-black border border-red-500/20 transition-all uppercase tracking-widest">Eliminar</button>
                         </div>
                         <p class="text-gray-300 text-sm mb-4 leading-relaxed font-medium italic text-left">"${reg.observaciones || 'Sin notas.'}"</p>
                         <div class="flex gap-2 overflow-x-auto scrollbar-hide py-1">
@@ -177,7 +179,7 @@
                     listado.appendChild(card);
                 });
             } catch (err) {
-                listado.innerHTML = '<div class="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl text-red-500 text-center text-xs font-bold uppercase">Error de Sincronización</div>';
+                listado.innerHTML = '<div class="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl text-red-500 text-center text-xs font-bold uppercase italic">Error de sincronización con el servidor</div>';
             }
         }
 
@@ -194,15 +196,16 @@
                 for (let file of fotosParaSubir) {
                     const fileName = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 4)}.jpg`;
 
-                    // CORRECCIÓN CRÍTICA: Subir el 'file' directamente, no el nombre.
+                    // SUBIDA CORREGIDA: Enviamos el objeto 'file' real (binario)
                     const { data, error } = await supabaseClient.storage
                         .from('fotos-aquabit')
                         .upload(fileName, file, {
-                            contentType: 'image/jpeg',
-                            upsert: false
+                            cacheControl: '3600',
+                            upsert: false,
+                            contentType: 'image/jpeg'
                         });
 
-                    if (error) throw new Error("Error en Storage: " + error.message);
+                    if (error) throw new Error("Fallo en Storage: " + error.message);
 
                     const { data: { publicUrl } } = supabaseClient.storage
                         .from('fotos-aquabit')
@@ -239,6 +242,7 @@
             } catch (e) { alert("Error al conectar con el servidor."); }
         }
 
+        // Inicialización
         setTipo('corte');
     </script>
 </body>
