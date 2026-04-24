@@ -217,26 +217,33 @@
             const res = await fetch(`${API}/registros/${tab}`);
             const data = await res.json();
             h.innerHTML = data.map(reg => `
-                <div class="card">
-                    <div class="grid-fotos">${reg.fotos.map((f, i) => {
+    <div class="card">
+        <div class="grid-fotos">${reg.fotos.map((f, i) => {
+                const urlInicial = f.url || f;
+                const esRepuesto = f.verificado;
+                const tieneFotoRepo = f.urlRepo && f.urlRepo !== ""; // Verificación de existencia
+
                 return `
-                        <div class="item-proceso" id="item-${reg.id}-${i}">
-                            <small>INICIAL</small>
-                            <img src="${f.url}" onclick="window.open('${f.url}')">
-                            
-                            ${tab === 'reposicion' ? (
-                        f.verificado
-                            ? `<div class="badge-ok">✔️ REPUESTO<br>${f.fechaRepo}</div>
-                                   <img src="${f.urlRepo}" class="img-repo" onclick="window.open('${f.urlRepo}')">`
+            <div class="item-proceso" id="item-${reg.id}-${i}">
+                <small>INICIAL</small>
+                <img src="${urlInicial}" onclick="window.open('${urlInicial}')">
+                
+                ${tab === 'reposicion' ? (
+                        esRepuesto
+                            ? `<div class="badge-ok">✔️ REPUESTO<br>${f.fechaRepo || ''}</div>
+                       ${tieneFotoRepo
+                                ? `<img src="${f.urlRepo}" class="img-repo" onclick="window.open('${f.urlRepo}')">`
+                                : '<p style="font-size:8px; color:gray;">(Sin foto de evidencia)</p>'
+                            }`
                             : `<button class="btn-adjuntar" onclick="prepararRepo(${reg.id}, ${i})">📸 ADJUNTAR REPO</button>`
                     ) : ''}
-                        </div>`;
+            </div>`;
             }).join('')}</div>
-                    <p><small>${new Date(reg.createdAt).toLocaleString()}</small></p>
-                    <p>${reg.observaciones || ''}</p>
-                    <button class="btn-del" onclick="del(${reg.id})">🗑️ ELIMINAR</button>
-                </div>
-            `).join('');
+        <p><small>${new Date(reg.createdAt).toLocaleString()}</small></p>
+        <p>${reg.observaciones || ''}</p>
+        <button class="btn-del" onclick="del(${reg.id})">🗑️ ELIMINAR</button>
+    </div>
+`).join('');
         }
 
         function prepararRepo(id, idx) {
