@@ -3,236 +3,73 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AquaBit OP - Técnico</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AquaBit OP - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root {
-            --primary: #2563eb;
-            --success: #10b981;
-            --danger: #dc2626;
-            --bg: #f3f4f6;
-        }
-
-        body {
-            font-family: sans-serif;
-            background: var(--bg);
-            margin: 0;
-            padding: 10px;
-        }
-
-        .container {
-            max-width: 500px;
-            margin: auto;
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            background: #e5e7eb;
-            font-weight: bold;
-        }
-
-        .tab-btn.active {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-cam {
-            background: var(--success);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 8px;
-            width: 100%;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .card {
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            padding: 12px;
-            border-radius: 10px;
-            margin-top: 15px;
-        }
-
-        .grid-fotos {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 10px;
-        }
-
-        .item-foto {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-width: 110px;
-        }
-
-        .item-foto img {
-            width: 110px;
-            height: 110px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
-
-        .badge-ok {
-            background: #dcfce7;
-            color: #166534;
-            font-size: 10px;
-            padding: 6px;
-            border-radius: 5px;
-            font-weight: bold;
-            margin-top: 5px;
-            text-align: center;
-        }
-
-        .btn-repo {
-            background: white;
-            color: var(--primary);
-            border: 1px solid var(--primary);
-            font-size: 10px;
-            padding: 6px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 5px;
-            font-weight: bold;
-        }
-
-        .btn-del {
-            width: 100%;
-            background: #fff1f2;
-            color: var(--danger);
-            border: 1px solid var(--danger);
-            padding: 8px;
-            border-radius: 5px;
-            margin-top: 10px;
-            font-weight: bold;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body class="bg-aqua-bg pb-24">
 
-    <div class="container">
-        <h2>🌊 AquaBit OP</h2>
-        <div class="tabs">
-            <button id="t-corte" class="tab-btn active" onclick="setTab('corte')">CORTES</button>
-            <button id="t-repo" class="tab-btn" onclick="setTab('reposicion')">REPOSICIÓN</button>
+    <nav class="p-6 text-center">
+        <h1 class="text-3xl font-black text-slate-800 tracking-tight">AquaBit OP</h1>
+    </nav>
+
+    <div class="container max-w-md mx-auto px-4">
+
+        <div class="grid grid-cols-3 gap-3 mb-8">
+            <button id="t-corte" onclick="setTab('corte')" class="btn-action active bg-corte">
+                <i class="bi bi-scissors text-xl"></i><br>
+                <span class="text-[10px] font-bold">CORTES</span>
+            </button>
+            <button id="t-repo" onclick="setTab('reposicion')" class="btn-action bg-repo">
+                <i class="bi bi-arrow-repeat text-xl"></i><br>
+                <span class="text-[10px] font-bold">REPOSICIÓN</span>
+            </button>
+            <button onclick="document.getElementById('f').click()" class="btn-action bg-evidencia">
+                <i class="bi bi-camera text-xl"></i><br>
+                <span class="text-[10px] font-bold uppercase">Tomar Evidencia</span>
+            </button>
         </div>
 
-        <button class="btn-cam" onclick="document.getElementById('f').click()">📸 TOMAR FOTOS</button>
         <input type="file" id="f" accept="image/*" capture="environment" multiple hidden>
-        <div id="p" style="display:flex; gap:5px; margin-top:10px;"></div>
-        <textarea id="o" style="width:100%; margin:10px 0; border-radius:8px; padding:10px;"
-            placeholder="Notas..."></textarea>
-        <button id="s"
-            style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold;"
-            onclick="subir()">GUARDAR REGISTRO</button>
 
-        <div id="h"></div>
+        <div class="mb-6">
+            <label class="block text-slate-600 font-bold mb-2 ml-1 text-sm">Observaciones de terreno...</label>
+            <div class="neumorphic-in p-4 rounded-2xl">
+                <textarea id="o" placeholder="Notas"
+                    class="w-full bg-transparent border-none outline-none text-slate-700 h-20 resize-none"></textarea>
+            </div>
+        </div>
+
+        <button id="s" onclick="subir()"
+            class="w-full bg-save text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 mb-10">
+            <i class="bi bi-cloud-arrow-up-fill"></i> GUARDAR REGISTRO
+        </button>
+
+        <div class="flex items-center gap-2 mb-4 px-1">
+            <i class="bi bi-clock-history text-slate-800 font-bold"></i>
+            <h2 class="font-bold text-slate-800">Historial Reciente</h2>
+        </div>
+
+        <div id="h" class="space-y-4">
+        </div>
     </div>
 
-    <script>
-        const S_URL = 'https://mjxpqxyxkshtqlptccto.supabase.co';
-        const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qeHBxeHl4a3NodHFscHRjY3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MzQyOTAsImV4cCI6MjA5MjMxMDI5MH0.KGi6VT8g-zKeEi0NWHpkdzdKHP1mF11Ch0Q-46c2Wps';
-        const API = 'https://aquabit-op.onrender.com/api';
+    <nav class="footer-nav fixed bottom-0 left-0 w-full flex justify-around items-center py-3 px-2 z-50">
+        <button class="text-slate-500 text-xl active:text-blue-600"><i class="bi bi-house"></i></button>
+        <button class="text-slate-500 text-xl active:text-blue-600"><i class="bi bi-bookmark"></i></button>
+        <div class="relative -top-5">
+            <button
+                class="w-14 h-14 bg-evidencia text-white rounded-full text-3xl shadow-lg flex items-center justify-center font-bold">+</button>
+        </div>
+        <button class="text-slate-500 text-xl active:text-blue-600"><i class="bi bi-x-lg"></i></button>
+        <button class="text-slate-500 text-xl active:text-blue-600"><i class="bi bi-three-dots-vertical"></i></button>
+    </nav>
 
-        const supabaseClient = supabase.createClient(S_URL, S_KEY);
-        let tab = 'corte', files = [];
-
-        function setTab(t) {
-            tab = t;
-            document.getElementById('t-corte').className = t === 'corte' ? 'tab-btn active' : 'tab-btn';
-            document.getElementById('t-repo').className = t === 'reposicion' ? 'tab-btn active' : 'tab-btn';
-            files = []; document.getElementById('p').innerHTML = ''; load();
-        }
-
-        document.getElementById('f').onchange = e => {
-            Array.from(e.target.files).forEach(file => {
-                files.push(file);
-                const r = new FileReader();
-                r.onload = ev => {
-                    const img = document.createElement('img');
-                    img.src = ev.target.result; img.style.width = "60px"; img.style.borderRadius = "5px";
-                    document.getElementById('p').appendChild(img);
-                };
-                r.readAsDataURL(file);
-            });
-        };
-
-        async function subir() {
-            if (!files.length) return alert("Faltan fotos");
-            try {
-                const urls = [];
-                for (let file of files) {
-                    const name = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
-                    await supabaseClient.storage.from('fotos-aquabit').upload(name, file);
-                    const { data } = supabaseClient.storage.from('fotos-aquabit').getPublicUrl(name);
-                    urls.push({ url: data.publicUrl, verificado: false });
-                }
-                await fetch(`${API}/upload`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tipo: tab, observaciones: document.getElementById('o').value, fotos: urls })
-                });
-                setTab(tab);
-            } catch (e) { alert("Error al subir"); }
-        }
-
-        async function load() {
-            const h = document.getElementById('h'); h.innerHTML = 'Cargando historial...';
-            try {
-                const res = await fetch(`${API}/registros/${tab}`);
-                const data = await res.json();
-                h.innerHTML = data.map(reg => `
-                    <div class="card">
-                        <div class="grid-fotos">${reg.fotos.map((f, i) => {
-                    const url = f.url || f;
-                    const ok = f.verificado;
-                    return `
-                            <div class="item-foto">
-                                <img src="${url}" onclick="window.open('${url}')">
-                                ${tab === 'reposicion' ? (
-                            ok ? `<div class="badge-ok">✔️ REPUESTO<br>${f.fechaRepo || ''}</div>`
-                                : `<button class="btn-repo" onclick="patch(${reg.id}, ${i})">Marcar Repuesto</button>`
-                        ) : ''}
-                            </div>`;
-                }).join('')}</div>
-                        <p><small>${new Date(reg.createdAt).toLocaleString()}</small></p>
-                        <p>${reg.observaciones || ''}</p>
-                        <button class="btn-del" onclick="del(${reg.id})">🗑️ ELIMINAR</button>
-                    </div>
-                `).join('');
-            } catch (e) { h.innerHTML = 'Sin conexión.'; }
-        }
-
-        async function patch(id, idx) {
-            await fetch(`${API}/registros/${id}/foto/${idx}`, { method: 'PATCH' });
-            load();
-        }
-
-        async function del(id) {
-            if (confirm("¿Borrar?")) { await fetch(`${API}/registros/${id}`, { method: 'DELETE' }); load(); }
-        }
-
-        window.onload = load;
-    </script>
+    <script src="script.js"></script>
 </body>
 
 </html>
