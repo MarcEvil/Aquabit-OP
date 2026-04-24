@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AquaBit OP - Dashboard Técnico</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css">
@@ -59,7 +60,7 @@
         <div id="h" class="space-y-6"></div>
     </div>
 
-    <nav class="footer-nav fixed bottom-0 left-0 w-full flex justify-around items-center py-4 z-50">
+    <!-- <nav class="footer-nav fixed bottom-0 left-0 w-full flex justify-around items-center py-4 z-50">
         <button class="f-item" onclick="location.reload()">
             <i class="bi bi-house-door-fill"></i>
         </button>
@@ -79,13 +80,41 @@
             <span class="text-[8px] font-black uppercase mt-1">DB Total</span>
         </a>
 
-        <!-- <button class="f-item" onclick="setTab('corte')">
+         <button class="f-item" onclick="setTab('corte')">
             <i class="bi bi-x-circle"></i>
         </button>
 
         <button class="f-item" onclick="load()">
             <i class="bi bi-arrow-clockwise"></i>
-        </button> -->
+        </button> 
+    </nav> -->
+
+    <nav class="footer-nav fixed bottom-0 left-0 w-full flex justify-around items-center py-4 z-50">
+        <button class="f-item" onclick="location.reload()">
+            <i class="bi bi-house-door-fill"></i>
+        </button>
+
+        <a href="galeria.html" class="f-item flex flex-col items-center no-underline">
+            <i class="bi bi-database-fill-gear text-2xl"></i>
+            <span class="text-[8px] font-black uppercase mt-1">DB Total</span>
+        </a>
+
+        <div class="relative -top-6">
+            <button
+                class="w-14 h-14 bg-evidencia text-white rounded-full text-3xl shadow-xl flex items-center justify-center font-bold"
+                onclick="document.getElementById('f').click()">
+                <i class="bi bi-plus-lg"></i>
+            </button>
+        </div>
+
+        <a href="https://aqua-chat-three.vercel.app" class="f-item flex flex-col items-center no-underline">
+            <i class="bi bi-chat-dots-fill text-2xl text-blue-600"></i>
+            <span class="text-[8px] font-black uppercase mt-1">Chat</span>
+        </a>
+
+        <button class="f-item" onclick="load()">
+            <i class="bi bi-arrow-clockwise"></i>
+        </button>
     </nav>
     <div class="text-center py-4 mb-4">
         <p class="text-[10px] text-slate-500 font-medium uppercase tracking-widest">
