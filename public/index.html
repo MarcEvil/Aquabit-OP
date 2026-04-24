@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AquaBit OP - Gestión de Terreno</title>
+    <title>AquaBit OP - Evidencia Técnica</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -27,7 +27,6 @@
             background: white;
             padding: 15px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .tabs {
@@ -63,44 +62,6 @@
             margin-bottom: 10px;
         }
 
-        .preview-area {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding: 10px;
-            border: 2px dashed #ccc;
-            border-radius: 8px;
-            min-height: 80px;
-        }
-
-        .preview-area img {
-            width: 70px;
-            height: 70px;
-            object-fit: cover;
-            border-radius: 5px;
-        }
-
-        textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-sizing: border-box;
-            margin: 10px 0;
-        }
-
-        .save-btn {
-            width: 100%;
-            padding: 15px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        /* Historial */
         .card {
             background: #fff;
             border: 1px solid #e5e7eb;
@@ -109,6 +70,7 @@
             margin-top: 15px;
         }
 
+        /* Cuadro de Proceso: Antes y Después */
         .grid-fotos {
             display: flex;
             gap: 10px;
@@ -116,40 +78,50 @@
             padding-bottom: 10px;
         }
 
-        .item-foto {
+        .item-proceso {
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-width: 100px;
-        }
-
-        .item-foto img {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
+            min-width: 130px;
+            background: #f9fafb;
+            padding: 8px;
             border-radius: 8px;
             border: 1px solid #ddd;
+        }
+
+        .item-proceso img {
+            width: 110px;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .img-repo {
+            border: 2px solid var(--success) !important;
+            margin-top: 5px;
         }
 
         .badge-ok {
             background: #dcfce7;
             color: #166534;
-            font-size: 10px;
-            padding: 4px;
+            font-size: 9px;
+            padding: 5px;
             border-radius: 5px;
             font-weight: bold;
             margin-top: 5px;
+            text-align: center;
         }
 
-        .btn-repo {
-            background: white;
-            color: var(--primary);
-            border: 1px solid var(--primary);
+        .btn-adjuntar {
+            background: var(--primary);
+            color: white;
+            border: none;
             font-size: 10px;
-            padding: 5px;
+            padding: 8px;
             border-radius: 5px;
             cursor: pointer;
             margin-top: 5px;
+            width: 100%;
         }
 
         .btn-del {
@@ -159,8 +131,13 @@
             border: 1px solid var(--danger);
             padding: 8px;
             border-radius: 5px;
-            cursor: pointer;
             margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .loading-overlay {
+            font-size: 10px;
+            color: var(--primary);
             font-weight: bold;
         }
     </style>
@@ -175,14 +152,18 @@
             <button id="t-repo" class="tab-btn" onclick="setTab('reposicion')">REPOSICIÓN</button>
         </div>
 
-        <button class="btn-cam" onclick="document.getElementById('f').click()">📸 TOMAR FOTOS</button>
+        <button class="btn-cam" onclick="document.getElementById('f').click()">📸 TOMAR FOTOS INICIALES</button>
         <input type="file" id="f" accept="image/*" capture="environment" multiple hidden>
-        <div id="p" class="preview-area"></div>
-        <textarea id="o" placeholder="Observaciones..."></textarea>
-        <button id="s" class="save-btn" onclick="subir()">GUARDAR TRABAJO</button>
+        <div id="p" style="display:flex; gap:5px; overflow-x:auto;"></div>
+        <textarea id="o" style="width:100%; margin:10px 0;" placeholder="Observaciones..."></textarea>
+        <button id="s" class="save-btn"
+            style="width:100%; padding:15px; background:var(--primary); color:white; border-radius:8px; border:none; font-weight:bold;"
+            onclick="subir()">GUARDAR TRABAJO</button>
 
         <div id="h"></div>
     </div>
+
+    <input type="file" id="f-repo" accept="image/*" capture="environment" hidden>
 
     <script>
         const S_URL = 'https://mjxpqxyxkshtqlptccto.supabase.co';
@@ -190,14 +171,13 @@
         const API = 'https://aquabit-op.onrender.com/api';
 
         const supabaseClient = supabase.createClient(S_URL, S_KEY);
-        let tab = 'corte', files = [];
+        let tab = 'corte', files = [], currentTarget = null;
 
         function setTab(t) {
             tab = t;
-            document.getElementById('t-corte').className = t === 'corte' ? 'tab-btn active' : 'tab-btn';
-            document.getElementById('t-repo').className = t === 'reposicion' ? 'tab-btn active' : 'tab-btn';
-            files = []; document.getElementById('p').innerHTML = ''; document.getElementById('o').value = '';
-            load();
+            document.getElementById('t-corte').classList.toggle('active', t === 'corte');
+            document.getElementById('t-repo').classList.toggle('active', t === 'reposicion');
+            files = []; document.getElementById('p').innerHTML = ''; load();
         }
 
         document.getElementById('f').onchange = e => {
@@ -206,7 +186,7 @@
                 const r = new FileReader();
                 r.onload = ev => {
                     const img = document.createElement('img');
-                    img.src = ev.target.result;
+                    img.src = ev.target.result; img.style.width = "60px";
                     document.getElementById('p').appendChild(img);
                 };
                 r.readAsDataURL(file);
@@ -214,12 +194,11 @@
         };
 
         async function subir() {
-            if (!files.length) return alert("Saca fotos");
-            const btn = document.getElementById('s'); btn.disabled = true; btn.innerText = "SUBIENDO...";
+            if (!files.length) return alert("Faltan fotos");
             try {
                 const urls = [];
                 for (let file of files) {
-                    const name = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
+                    const name = `aq_${Date.now()}.jpg`;
                     await supabaseClient.storage.from('fotos-aquabit').upload(name, file);
                     const { data } = supabaseClient.storage.from('fotos-aquabit').getPublicUrl(name);
                     urls.push({ url: data.publicUrl, verificado: false });
@@ -229,8 +208,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ tipo: tab, observaciones: document.getElementById('o').value, fotos: urls })
                 });
-                alert("Guardado"); setTab(tab);
-            } catch (e) { alert(e.message); btn.disabled = false; btn.innerText = "GUARDAR"; }
+                setTab(tab);
+            } catch (e) { alert(e.message); }
         }
 
         async function load() {
@@ -240,12 +219,17 @@
             h.innerHTML = data.map(reg => `
                 <div class="card">
                     <div class="grid-fotos">${reg.fotos.map((f, i) => {
-                const url = f.url || f;
-                const ok = f.verificado;
                 return `
-                        <div class="item-foto">
-                            <img src="${url}" onclick="window.open('${url}')">
-                            ${tab === 'reposicion' ? (ok ? '<span class="badge-ok">✔️ REPUESTO</span>' : `<button class="btn-repo" onclick="patch(${reg.id}, ${i})">Marcar Repuesto</button>`) : ''}
+                        <div class="item-proceso" id="item-${reg.id}-${i}">
+                            <small>INICIAL</small>
+                            <img src="${f.url}" onclick="window.open('${f.url}')">
+                            
+                            ${tab === 'reposicion' ? (
+                        f.verificado
+                            ? `<div class="badge-ok">✔️ REPUESTO<br>${f.fechaRepo}</div>
+                                   <img src="${f.urlRepo}" class="img-repo" onclick="window.open('${f.urlRepo}')">`
+                            : `<button class="btn-adjuntar" onclick="prepararRepo(${reg.id}, ${i})">📸 ADJUNTAR REPO</button>`
+                    ) : ''}
                         </div>`;
             }).join('')}</div>
                     <p><small>${new Date(reg.createdAt).toLocaleString()}</small></p>
@@ -255,15 +239,35 @@
             `).join('');
         }
 
-        async function patch(id, idx) {
-            await fetch(`${API}/registros/${id}/foto/${idx}`, { method: 'PATCH' });
-            load();
+        function prepararRepo(id, idx) {
+            currentTarget = { id, idx };
+            document.getElementById('f-repo').click();
         }
+
+        document.getElementById('f-repo').onchange = async (e) => {
+            const file = e.target.files;
+            if (!file || !currentTarget) return;
+
+            const itemDiv = document.getElementById(`item-${currentTarget.id}-${currentTarget.idx}`);
+            itemDiv.innerHTML = '<span class="loading-overlay">SUBIENDO EVIDENCIA...</span>';
+
+            try {
+                const name = `repo_${Date.now()}.jpg`;
+                await supabaseClient.storage.from('fotos-aquabit').upload(name, file);
+                const { data } = supabaseClient.storage.from('fotos-aquabit').getPublicUrl(name);
+
+                await fetch(`${API}/registros/${currentTarget.id}/foto/${currentTarget.idx}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fotoRepoUrl: data.publicUrl })
+                });
+                load();
+            } catch (e) { alert("Error al subir"); load(); }
+        };
 
         async function del(id) {
             if (confirm("¿Borrar?")) { await fetch(`${API}/registros/${id}`, { method: 'DELETE' }); load(); }
         }
-
         window.onload = load;
     </script>
 </body>

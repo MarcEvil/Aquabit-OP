@@ -22,7 +22,6 @@ const Registro = sequelize.define('Registro', {
     fotos: { type: DataTypes.JSON, allowNull: false, defaultValue: [] }
 }, { timestamps: true });
 
-// Obtener historial
 app.get('/api/registros/:tipo', async (req, res) => {
     try {
         const registros = await Registro.findAll({
@@ -33,7 +32,6 @@ app.get('/api/registros/:tipo', async (req, res) => {
     } catch (e) { res.status(500).send(e.message); }
 });
 
-// Crear registro inicial
 app.post('/api/upload', async (req, res) => {
     try {
         const nuevo = await Registro.create(req.body);
@@ -41,20 +39,24 @@ app.post('/api/upload', async (req, res) => {
     } catch (e) { res.status(500).send(e.message); }
 });
 
-// ACTUALIZACIÓN INDIVIDUAL: Marcar una foto específica como repuesto
+// PATCH: Ahora recibe la URL de la foto de reposición
 app.patch('/api/registros/:id/foto/:index', async (req, res) => {
     try {
         const { id, index } = req.params;
+        const { fotoRepoUrl } = req.body;
         const reg = await Registro.findByPk(id);
         if (!reg) return res.status(404).send("No encontrado");
 
         let fotosUpdate = [...reg.fotos];
-        // Normalizamos a objeto si era string, y marcamos verificado
-        if (typeof fotosUpdate[index] === 'string') {
-            fotosUpdate[index] = { url: fotosUpdate[index], verificado: true };
-        } else {
-            fotosUpdate[index] = { ...fotosUpdate[index], verificado: true };
-        }
+        const ahora = new Date().toLocaleString("es-CL", { timeZone: "America/Santiago" });
+
+        // Guardamos la foto original y la nueva de reposición en el mismo cuadro
+        fotosUpdate[index] = {
+            ...fotosUpdate[index],
+            verificado: true,
+            fechaRepo: ahora,
+            urlRepo: fotoRepoUrl // Nueva propiedad para la foto adjunta
+        };
 
         reg.fotos = fotosUpdate;
         await reg.save();
@@ -62,7 +64,6 @@ app.patch('/api/registros/:id/foto/:index', async (req, res) => {
     } catch (e) { res.status(500).send(e.message); }
 });
 
-// Eliminar registro
 app.delete('/api/registros/:id', async (req, res) => {
     try {
         await Registro.destroy({ where: { id: req.params.id } });
@@ -72,6 +73,6 @@ app.delete('/api/registros/:id', async (req, res) => {
 
 async function start() {
     await sequelize.sync();
-    app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
+    app.listen(PORT, () => console.log(`Servidor AquaBit en puerto ${PORT}`));
 }
 start();

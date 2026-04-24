@@ -156,3 +156,17 @@ header {
     background: var(--primary);
     color: white;
 }
+
+.badge-ok {
+    background: #dcfce7;
+    color: #166534;
+    font-size: 10px;
+    padding: 6px;
+    /* Aumentamos un poco el padding */
+    border-radius: 5px;
+    font-weight: bold;
+    margin-top: 5px;
+    text-align: center;
+    /* Centramos el texto y la fecha */
+    line-height: 1.2;
+}
