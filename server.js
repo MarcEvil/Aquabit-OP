@@ -39,24 +39,22 @@ app.post('/api/upload', async (req, res) => {
     } catch (e) { res.status(500).send(e.message); }
 });
 
-// PATCH: Ahora recibe la URL de la foto de reposición
+// PATCH: Solo marca verificado y guarda la hora actual
 app.patch('/api/registros/:id/foto/:index', async (req, res) => {
     try {
         const { id, index } = req.params;
-        const { fotoRepoUrl } = req.body;
         const reg = await Registro.findByPk(id);
         if (!reg) return res.status(404).send("No encontrado");
 
         let fotosUpdate = [...reg.fotos];
         const ahora = new Date().toLocaleString("es-CL", { timeZone: "America/Santiago" });
 
-        // Guardamos la foto original y la nueva de reposición en el mismo cuadro
-        fotosUpdate[index] = {
-            ...fotosUpdate[index],
-            verificado: true,
-            fechaRepo: ahora,
-            urlRepo: fotoRepoUrl // Nueva propiedad para la foto adjunta
-        };
+        // Actualizamos solo el estado y la fecha
+        if (typeof fotosUpdate[index] === 'string') {
+            fotosUpdate[index] = { url: fotosUpdate[index], verificado: true, fechaRepo: ahora };
+        } else {
+            fotosUpdate[index] = { ...fotosUpdate[index], verificado: true, fechaRepo: ahora };
+        }
 
         reg.fotos = fotosUpdate;
         await reg.save();
@@ -73,6 +71,6 @@ app.delete('/api/registros/:id', async (req, res) => {
 
 async function start() {
     await sequelize.sync();
-    app.listen(PORT, () => console.log(`Servidor AquaBit en puerto ${PORT}`));
+    app.listen(PORT, () => console.log(`Servidor AquaBit activo`));
 }
 start();

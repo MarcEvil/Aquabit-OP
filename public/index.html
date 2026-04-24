@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AquaBit OP - Evidencia Técnica</title>
+    <title>AquaBit OP - Técnico</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -59,7 +59,6 @@
             width: 100%;
             cursor: pointer;
             font-weight: bold;
-            margin-bottom: 10px;
         }
 
         .card {
@@ -70,7 +69,6 @@
             margin-top: 15px;
         }
 
-        /* Cuadro de Proceso: Antes y Después */
         .grid-fotos {
             display: flex;
             gap: 10px;
@@ -78,50 +76,42 @@
             padding-bottom: 10px;
         }
 
-        .item-proceso {
+        .item-foto {
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-width: 130px;
-            background: #f9fafb;
-            padding: 8px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
+            min-width: 110px;
         }
 
-        .item-proceso img {
+        .item-foto img {
             width: 110px;
             height: 110px;
             object-fit: cover;
-            border-radius: 5px;
-        }
-
-        .img-repo {
-            border: 2px solid var(--success) !important;
-            margin-top: 5px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
         }
 
         .badge-ok {
             background: #dcfce7;
             color: #166534;
-            font-size: 9px;
-            padding: 5px;
+            font-size: 10px;
+            padding: 6px;
             border-radius: 5px;
             font-weight: bold;
             margin-top: 5px;
             text-align: center;
         }
 
-        .btn-adjuntar {
-            background: var(--primary);
-            color: white;
-            border: none;
+        .btn-repo {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
             font-size: 10px;
-            padding: 8px;
+            padding: 6px;
             border-radius: 5px;
             cursor: pointer;
             margin-top: 5px;
-            width: 100%;
+            font-weight: bold;
         }
 
         .btn-del {
@@ -132,12 +122,6 @@
             padding: 8px;
             border-radius: 5px;
             margin-top: 10px;
-            font-weight: bold;
-        }
-
-        .loading-overlay {
-            font-size: 10px;
-            color: var(--primary);
             font-weight: bold;
         }
     </style>
@@ -152,18 +136,17 @@
             <button id="t-repo" class="tab-btn" onclick="setTab('reposicion')">REPOSICIÓN</button>
         </div>
 
-        <button class="btn-cam" onclick="document.getElementById('f').click()">📸 TOMAR FOTOS INICIALES</button>
+        <button class="btn-cam" onclick="document.getElementById('f').click()">📸 TOMAR FOTOS</button>
         <input type="file" id="f" accept="image/*" capture="environment" multiple hidden>
-        <div id="p" style="display:flex; gap:5px; overflow-x:auto;"></div>
-        <textarea id="o" style="width:100%; margin:10px 0;" placeholder="Observaciones..."></textarea>
-        <button id="s" class="save-btn"
-            style="width:100%; padding:15px; background:var(--primary); color:white; border-radius:8px; border:none; font-weight:bold;"
-            onclick="subir()">GUARDAR TRABAJO</button>
+        <div id="p" style="display:flex; gap:5px; margin-top:10px;"></div>
+        <textarea id="o" style="width:100%; margin:10px 0; border-radius:8px; padding:10px;"
+            placeholder="Notas..."></textarea>
+        <button id="s"
+            style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold;"
+            onclick="subir()">GUARDAR REGISTRO</button>
 
         <div id="h"></div>
     </div>
-
-    <input type="file" id="f-repo" accept="image/*" capture="environment" hidden>
 
     <script>
         const S_URL = 'https://mjxpqxyxkshtqlptccto.supabase.co';
@@ -171,12 +154,12 @@
         const API = 'https://aquabit-op.onrender.com/api';
 
         const supabaseClient = supabase.createClient(S_URL, S_KEY);
-        let tab = 'corte', files = [], currentTarget = null;
+        let tab = 'corte', files = [];
 
         function setTab(t) {
             tab = t;
-            document.getElementById('t-corte').classList.toggle('active', t === 'corte');
-            document.getElementById('t-repo').classList.toggle('active', t === 'reposicion');
+            document.getElementById('t-corte').className = t === 'corte' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('t-repo').className = t === 'reposicion' ? 'tab-btn active' : 'tab-btn';
             files = []; document.getElementById('p').innerHTML = ''; load();
         }
 
@@ -186,7 +169,7 @@
                 const r = new FileReader();
                 r.onload = ev => {
                     const img = document.createElement('img');
-                    img.src = ev.target.result; img.style.width = "60px";
+                    img.src = ev.target.result; img.style.width = "60px"; img.style.borderRadius = "5px";
                     document.getElementById('p').appendChild(img);
                 };
                 r.readAsDataURL(file);
@@ -198,7 +181,7 @@
             try {
                 const urls = [];
                 for (let file of files) {
-                    const name = `aq_${Date.now()}.jpg`;
+                    const name = `aq_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
                     await supabaseClient.storage.from('fotos-aquabit').upload(name, file);
                     const { data } = supabaseClient.storage.from('fotos-aquabit').getPublicUrl(name);
                     urls.push({ url: data.publicUrl, verificado: false });
@@ -209,72 +192,45 @@
                     body: JSON.stringify({ tipo: tab, observaciones: document.getElementById('o').value, fotos: urls })
                 });
                 setTab(tab);
-            } catch (e) { alert(e.message); }
+            } catch (e) { alert("Error al subir"); }
         }
 
         async function load() {
-            const h = document.getElementById('h'); h.innerHTML = 'Cargando...';
-            const res = await fetch(`${API}/registros/${tab}`);
-            const data = await res.json();
-            h.innerHTML = data.map(reg => `
-    <div class="card">
-        <div class="grid-fotos">${reg.fotos.map((f, i) => {
-                const urlInicial = f.url || f;
-                const esRepuesto = f.verificado;
-                const tieneFotoRepo = f.urlRepo && f.urlRepo !== ""; // Verificación de existencia
-
-                return `
-            <div class="item-proceso" id="item-${reg.id}-${i}">
-                <small>INICIAL</small>
-                <img src="${urlInicial}" onclick="window.open('${urlInicial}')">
-                
-                ${tab === 'reposicion' ? (
-                        esRepuesto
-                            ? `<div class="badge-ok">✔️ REPUESTO<br>${f.fechaRepo || ''}</div>
-                       ${tieneFotoRepo
-                                ? `<img src="${f.urlRepo}" class="img-repo" onclick="window.open('${f.urlRepo}')">`
-                                : '<p style="font-size:8px; color:gray;">(Sin foto de evidencia)</p>'
-                            }`
-                            : `<button class="btn-adjuntar" onclick="prepararRepo(${reg.id}, ${i})">📸 ADJUNTAR REPO</button>`
-                    ) : ''}
-            </div>`;
-            }).join('')}</div>
-        <p><small>${new Date(reg.createdAt).toLocaleString()}</small></p>
-        <p>${reg.observaciones || ''}</p>
-        <button class="btn-del" onclick="del(${reg.id})">🗑️ ELIMINAR</button>
-    </div>
-`).join('');
-        }
-
-        function prepararRepo(id, idx) {
-            currentTarget = { id, idx };
-            document.getElementById('f-repo').click();
-        }
-
-        document.getElementById('f-repo').onchange = async (e) => {
-            const file = e.target.files;
-            if (!file || !currentTarget) return;
-
-            const itemDiv = document.getElementById(`item-${currentTarget.id}-${currentTarget.idx}`);
-            itemDiv.innerHTML = '<span class="loading-overlay">SUBIENDO EVIDENCIA...</span>';
-
+            const h = document.getElementById('h'); h.innerHTML = 'Cargando historial...';
             try {
-                const name = `repo_${Date.now()}.jpg`;
-                await supabaseClient.storage.from('fotos-aquabit').upload(name, file);
-                const { data } = supabaseClient.storage.from('fotos-aquabit').getPublicUrl(name);
+                const res = await fetch(`${API}/registros/${tab}`);
+                const data = await res.json();
+                h.innerHTML = data.map(reg => `
+                    <div class="card">
+                        <div class="grid-fotos">${reg.fotos.map((f, i) => {
+                    const url = f.url || f;
+                    const ok = f.verificado;
+                    return `
+                            <div class="item-foto">
+                                <img src="${url}" onclick="window.open('${url}')">
+                                ${tab === 'reposicion' ? (
+                            ok ? `<div class="badge-ok">✔️ REPUESTO<br>${f.fechaRepo || ''}</div>`
+                                : `<button class="btn-repo" onclick="patch(${reg.id}, ${i})">Marcar Repuesto</button>`
+                        ) : ''}
+                            </div>`;
+                }).join('')}</div>
+                        <p><small>${new Date(reg.createdAt).toLocaleString()}</small></p>
+                        <p>${reg.observaciones || ''}</p>
+                        <button class="btn-del" onclick="del(${reg.id})">🗑️ ELIMINAR</button>
+                    </div>
+                `).join('');
+            } catch (e) { h.innerHTML = 'Sin conexión.'; }
+        }
 
-                await fetch(`${API}/registros/${currentTarget.id}/foto/${currentTarget.idx}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fotoRepoUrl: data.publicUrl })
-                });
-                load();
-            } catch (e) { alert("Error al subir"); load(); }
-        };
+        async function patch(id, idx) {
+            await fetch(`${API}/registros/${id}/foto/${idx}`, { method: 'PATCH' });
+            load();
+        }
 
         async function del(id) {
             if (confirm("¿Borrar?")) { await fetch(`${API}/registros/${id}`, { method: 'DELETE' }); load(); }
         }
+
         window.onload = load;
     </script>
 </body>
