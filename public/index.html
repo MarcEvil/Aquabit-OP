@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AquaBit OP</title>
+    <title>AquaBit OP - Sistema Técnico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -20,25 +20,28 @@
     <div class="container max-w-md mx-auto px-4">
         <div class="grid grid-cols-3 gap-3 mb-6">
             <button id="t-corte" onclick="setTab('corte')" class="btn-action active bg-corte">
-                <i class="bi bi-scissors text-xl"></i><br><span class="text-[10px] font-bold">CORTES</span>
+                <i class="bi bi-scissors text-xl"></i><br>
+                <span class="text-[10px] font-bold">CORTES</span>
             </button>
             <button id="t-repo" onclick="setTab('reposicion')" class="btn-action bg-repo">
-                <i class="bi bi-arrow-repeat text-xl"></i><br><span class="text-[10px] font-bold">REPOSICIÓN</span>
+                <i class="bi bi-arrow-repeat text-xl"></i><br>
+                <span class="text-[10px] font-bold">REPOSICIÓN</span>
             </button>
             <button onclick="document.getElementById('f').click()" class="btn-action bg-evidencia">
-                <i class="bi bi-camera text-xl"></i><br><span class="text-[10px] font-bold">EVIDENCIA</span>
+                <i class="bi bi-camera text-xl"></i><br>
+                <span class="text-[10px] font-bold uppercase">Evidencia</span>
             </button>
         </div>
 
         <input type="file" id="f" accept="image/*" capture="environment" multiple hidden>
 
-        <div id="p" class="flex gap-2 overflow-x-auto mb-4 min-h-[10px]"></div>
+        <div id="p" class="flex gap-2 overflow-x-auto mb-4 min-h-[50px] items-center"></div>
 
         <div class="mb-6">
             <label class="block text-slate-600 font-bold mb-2 text-sm ml-1">Observaciones de terreno...</label>
             <div class="neumorphic-in p-4 rounded-2xl">
-                <textarea id="o" placeholder="Notas"
-                    class="w-full bg-transparent border-none outline-none text-slate-700 h-20 resize-none"></textarea>
+                <textarea id="o" placeholder="Escribe aquí..."
+                    class="w-full bg-transparent border-none outline-none text-slate-700 h-20 resize-none font-medium"></textarea>
             </div>
         </div>
 
@@ -47,12 +50,12 @@
             <i class="bi bi-cloud-arrow-up-fill"></i> GUARDAR REGISTRO
         </button>
 
-        <div class="flex items-center gap-2 mb-4">
-            <i class="bi bi-clock-history font-bold"></i>
-            <h2 class="font-bold">Historial Reciente</h2>
+        <div class="flex items-center gap-2 mb-4 px-1">
+            <i class="bi bi-clock-history font-bold text-slate-800"></i>
+            <h2 class="font-bold text-slate-800">Historial Reciente</h2>
         </div>
 
-        <div id="h" class="space-y-4"></div>
+        <div id="h" class="space-y-6"></div>
     </div>
 
     <nav class="footer-nav fixed bottom-0 left-0 w-full flex justify-around items-center py-4 z-50">
@@ -64,7 +67,7 @@
                 onclick="document.getElementById('f').click()">+</button>
         </div>
         <button class="f-item"><i class="bi bi-x-lg"></i></button>
-        <button class="f-item"><i class="bi bi-three-dots-vertical"></i></button>
+        <button class="f-item" onclick="load()"><i class="bi bi-arrow-clockwise"></i></button>
     </nav>
 
     <script src="script.js"></script>
