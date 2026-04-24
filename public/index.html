@@ -1,67 +1,128 @@
 <!DOCTYPE html>
+
 <html lang="es">
 
+
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AquaBit OP - Sistema de Terreno</title>
+
+    <title>AquaBit OP - Gestión Pro</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
     <link rel="stylesheet" href="style.css">
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 </head>
 
-<body>
 
-    <nav class="header shadow-in">
-        <h1>AquaBit OP</h1>
+
+<body class="bg-light">
+
+
+
+    <nav class="navbar navbar-dark bg-primary shadow-sm mb-4">
+
+        <div class="container justify-content-center">
+
+            <span class="navbar-brand mb-0 h1"><i class="bi bi-droplet-half"></i> AquaBit OP</span>
+
+        </div>
+
     </nav>
 
-    <div class="container pb-5">
 
-        <div class="row-tabs mb-4">
-            <div class="col-4">
-                <button id="t-corte" class="btn btn-action tab-corte active shadow-out" onclick="setTab('corte')">
-                    <span class="ico-txt">CORTES</span>
+
+    <div class="container pb-5" style="max-width: 600px;">
+
+        <div class="row g-2 mb-4">
+
+            <div class="col-6">
+
+                <button id="t-corte" class="btn btn-outline-primary w-100 fw-bold shadow-sm active"
+                    onclick="setTab('corte')">
+
+                    <i class="bi bi-scissors"></i> CORTES
+
                 </button>
+
             </div>
-            <div class="col-4">
-                <button id="t-repo" class="btn btn-action tab-repo shadow-out" onclick="setTab('reposicion')">
-                    <span class="ico-txt">REPOSICIÓN</span>
+
+            <div class="col-6">
+
+                <button id="t-repo" class="btn btn-outline-primary w-100 fw-bold shadow-sm"
+                    onclick="setTab('reposicion')">
+
+                    <i class="bi bi-arrow-repeat"></i> REPOSICIÓN
+
                 </button>
+
             </div>
-            <div class="col-4">
-                <button class="btn btn-action btn-cam shadow-out" onclick="document.getElementById('f').click()">
-                    <span class="ico-txt">TOMAR EVIDENCIA</span>
-                </button>
-            </div>
+
         </div>
 
-        <input type="file" id="f" accept="image/*" capture="environment" multiple hidden>
 
-        <div class="card card-carga shadow-out mb-4">
-            <label for="o" class="text-secondary fw-bold mb-2 d-block">Observaciones de terreno...</label>
-            <textarea class="form-control" placeholder="Notas" id="o"></textarea>
+
+        <div class="card border-0 shadow-sm mb-4 animate-in">
+
+            <div class="card-body">
+
+                <button class="btn btn-success w-100 py-3 mb-3 fw-bold shadow-sm btn-cam"
+                    onclick="document.getElementById('f').click()">
+
+                    <i class="bi bi-camera-fill me-2"></i> TOMAR EVIDENCIA
+
+                </button>
+
+                <input type="file" id="f" accept="image/*" capture="environment" multiple hidden>
+
+
+
+                <div id="p" class="d-flex gap-2 overflow-auto py-2 mb-2"></div>
+
+
+
+                <div class="form-floating mb-3">
+
+                    <textarea class="form-control" placeholder="Notas" id="o" style="height: 100px"></textarea>
+
+                    <label for="o">Observaciones de terreno...</label>
+
+                </div>
+
+
+
+                <button id="s" class="btn btn-primary w-100 py-2 fw-bold" onclick="subir()">
+
+                    <i class="bi bi-cloud-arrow-up-fill me-1"></i> GUARDAR REGISTRO
+
+                </button>
+
+            </div>
+
         </div>
 
-        <button id="s" class="btn btn-submit shadow-out mb-4" onclick="subir()">
-            <span class="ico-txt">GUARDAR REGISTRO</span>
-        </button>
 
-        <div class="historial-title mb-3 shadow-in">
-            <span class="fw-bold">Historial Reciente</span>
-        </div>
+
+        <h5 class="text-secondary mb-3"><i class="bi bi-clock-history"></i> Historial Reciente</h5>
 
         <div id="h"></div>
+
     </div>
 
-    <nav class="footer-nav shadow-in">
-        <button class="foot-btn active"><span class="nav-ico">🏠</span></button>
-        <button class="foot-btn"><span class="nav-ico">🔖</span></button>
-        <button class="foot-btn plus-btn shadow-out"><span>+</span></button>
-        <button class="foot-btn"><span class="nav-ico">📄</span></button>
-        <button class="foot-btn"><span class="nav-ico">⋮</span></button>
-    </nav>
+
 
     <script src="script.js"></script>
+
 </body>
+
+
 
 </html>
