@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaBit OP - Galería Histórica</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #e6eef4;
+            font-family: sans-serif;
+        }
+
+        .grid-galeria {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 8px;
+            padding: 15px;
+        }
+
+        .img-db {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            border-radius: 8px;
+            shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body class="pb-20">
+    <nav class="p-6 bg-white shadow-sm flex items-center gap-4">
+        <a href="index.html" class="text-slate-800 text-2xl"><i class="bi bi-arrow-left"></i></a>
+        <h1 class="text-xl font-black text-slate-800">Base de Datos Total</h1>
+    </nav>
+
+    <div id="galeria-total" class="grid-galeria">
+    </div>
+
+    <script>
+        const API = 'https://aquabit-op.onrender.com/api';
+
+        async function cargarTodo() {
+            const container = document.getElementById('galeria-total');
+            container.innerHTML = '<p class="col-span-full text-center py-20 text-slate-400">Consultando base de datos...</p>';
+
+            try {
+                // Aquí podrías hacer dos fetch (corte y reposición) o tener un endpoint de "todos"
+                const resCortes = await fetch(`${API}/registros/corte`);
+                const resRepo = await fetch(`${API}/registros/reposicion`);
+
+                const cortes = await resCortes.json();
+                const repos = await resRepo.json();
+                const total = [...cortes, ...repos];
+
+                if (total.length === 0) {
+                    container.innerHTML = '<p class="col-span-full text-center py-20">No hay imágenes en la base de datos.</p>';
+                    return;
+                }
+
+                container.innerHTML = total.map(reg =>
+                    reg.fotos.map(f => `
+                        <div class="relative group">
+                            <img src="${f.url || f}" class="img-db" onclick="window.open('${f.url || f}')">
+                            <div class="absolute bottom-1 left-1 bg-black/50 text-white text-[8px] px-1 rounded">
+                                ${reg.tipo === 'corte' ? 'CORTE' : 'REPO'}
+                            </div>
+                        </div>
+                    `).join('')
+                ).join('');
+
+            } catch (e) {
+                container.innerHTML = '<p class="col-span-full text-center text-red-500">Error al conectar con la base de datos.</p>';
+            }
+        }
+
+        window.onload = cargarTodo;
+    </script>
+</body>
+
+</html>
