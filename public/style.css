@@ -102,3 +102,10 @@ body.theme-reposicion .neumorphic-in {
     font-weight: bold;
     text-align: center;
 }
+
+.copyright-text {
+    color: #94a3b8;
+    text-shadow: 1px 1px 0px #ffffff;
+    font-size: 10px;
+    letter-spacing: 1px;
+}
